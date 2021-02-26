@@ -3,9 +3,12 @@ package hu.emraxxor.web.ide.service;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.BiFunction;
 
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
@@ -16,7 +19,6 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.PortBinding;
@@ -25,7 +27,11 @@ import hu.emraxxor.web.ide.config.UserProperties;
 import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerCommand;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerElement;
+import hu.emraxxor.web.ide.data.type.docker.DockerContainerExecCommand;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerImage;
+import hu.emraxxor.web.ide.data.type.docker.consumer.FrameConsumerResultCallback;
+import hu.emraxxor.web.ide.data.type.docker.consumer.OutputFrame;
+import hu.emraxxor.web.ide.data.type.docker.consumer.ToStringConsumer;
 import lombok.SneakyThrows;
 import lombok.Synchronized;
 
@@ -54,7 +60,12 @@ public class DockerContainerService {
 	
 	@Synchronized
 	public 	List<Container> containers() {
-		return client.listContainersCmd().exec();
+		return client
+					.listContainersCmd()
+					.withShowSize(true)
+  				    .withShowAll(true)
+					.withStatusFilter(Arrays.asList("exited"))
+					.exec();
 	}
 	
 	
@@ -94,6 +105,50 @@ public class DockerContainerService {
 	}
 	
 	
+	@Synchronized
+	public Boolean stopContainer(DockerContainerElement el) {
+		return authorizedCmd(el, ( e,f ) ->  f.stopContainerCmd(e.getContainerId()).exec() ).isEmpty();
+	}
+	
+	
+	@Synchronized
+	public void killContainer(DockerContainerElement el) {
+		client.killContainerCmd(el.getId());
+	}
+	
+	@Synchronized
+	@SneakyThrows
+	public Optional<Object> exec(DockerContainerExecCommand exec) {
+		var project = projectService.find(exec.getId());
+		if ( project.isPresent()  ) {
+			var container = project.get().getContainer();
+			if ( container != null && project.get().getUser().equals(userService.curr()) ) {
+				 var containerid = container.getContainerId();
+			     var execCreateCmdResponse = client
+			    		 						.execCreateCmd(containerid)
+			    		 						.withAttachStdout(true)
+			    		 						.withAttachStderr(true)
+			    		 						.withCmd(exec.getCommand().split(" "))
+			    		 						.exec();
+			     
+			     var stdoutConsumer = new ToStringConsumer();
+			     var stderrConsumer = new ToStringConsumer();
+
+			     var callback = new FrameConsumerResultCallback();
+			     callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
+			     callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
+			     
+			     client.execStartCmd(execCreateCmdResponse.getId()).exec(callback).awaitCompletion();
+
+			     return Optional.of( new Object[] {
+			    		 stdoutConsumer.toString(Charset.defaultCharset()),
+			    		 stderrConsumer.toString(Charset.defaultCharset())
+			     });
+			} 
+		}
+		return Optional.empty();
+	}
+	
 	@Transactional(value = TxType.MANDATORY)
 	private int randomBind() {
 		var port = randomAvailablePort();
@@ -103,19 +158,30 @@ public class DockerContainerService {
 		
 		return port;
 	}
-	
+
 	@Synchronized
+	public Optional<String> log(DockerContainerElement cmd) {
+	    var callback = new FrameConsumerResultCallback();
+	    var consumer = new ToStringConsumer();
+		authorizedCmd(cmd, ( e,f ) ->  f.logContainerCmd(e.getContainerId()).exec(callback) );
+		return Optional.ofNullable( consumer.toString(Charset.defaultCharset()) );
+	}
+	
+	
 	public Boolean start(DockerContainerElement cmd) {
+		return authorizedCmd(cmd, ( e,f ) ->  f.startContainerCmd(e.getContainerId()).exec() ).isEmpty();
+	}
+	
+
+	@Synchronized
+	private <T extends hu.emraxxor.web.ide.entities.Container> Optional<?> authorizedCmd(DockerContainerElement el, BiFunction<T,DockerClient,?> fn) {
 		var curr = userService.curr();
-		var container = containerService.findByContainerIdAndUser(cmd.getId(), curr);
-		if ( container.isPresent() ) {
-			client.startContainerCmd(cmd.getId()).exec();
-			return true;
-		}
-		return false;
+		var container = containerService.findByContainerIdAndUser(el.getId(), curr);
+        if ( container.isPresent() ) 
+        	return Optional.ofNullable( fn.apply(  (T) container.get() , client ) );
+        return Optional.empty();
 	}
 
-	
 	
 	@Synchronized
 	public InspectContainerResponse inspect(DockerContainerElement inspectcmd) {
@@ -132,16 +198,15 @@ public class DockerContainerService {
 		
 		if ( dockerImg.isPresent() && cproject.isPresent()  && cproject.get().getUser().equals(user) ) {
 			CreateContainerResponse resp;
-			hu.emraxxor.web.ide.entities.Container container;
 			var project = cproject.get();
+			var container = project.getContainer();
 			var img = dockerImg.get();
 			var uname = user.getNeptunId();
+			var userdir = userprops.getStorage();
+			var bindport = randomBind();
+			var appdir = userdir + "/" + uname +  "/projects/" + project.getIdentifier();
 				
-			if ( project.getContainer() == null ) {
-				var userdir = userprops.getStorage();
-				var appdir = userdir + "/" + uname +  "/projects/" + project.getIdentifier();
-				var bindport = randomBind();
-				
+			if ( container == null ) {		
 				container = hu.emraxxor.web.ide.entities.Container.builder()
 									.appdir( appdir )
 									.bind( bindport )
@@ -154,24 +219,25 @@ public class DockerContainerService {
 				container = containerService.save(container);
 				project = projectService.save(project);
 				container.setProject(project);
-				
-				var containercmd = client.createContainerCmd(img.image()).withName(uname);
-				var hostconfig = containercmd.getHostConfig();
-				
-				hostconfig.withPortBindings(PortBinding.parse(bindport + ":" + command.getExposed()))
-						  .withBinds(Bind.parse(appdir + ":/app"));
-				
-				resp = containercmd.exec();
-			} else {
-				container = project.getContainer();
-				var containercmd = client.createContainerCmd(img.image()).withName(uname);
-				var hostconfig = containercmd.getHostConfig();
-				
-				hostconfig.withPortBindings(PortBinding.parse(container.getBind() + ":" + command.getExposed()))
-						  .withBinds(Bind.parse(container.getAppdir() + ":/app"));
-				
-				resp = containercmd.exec();
-			}
+			} 
+			
+			var containercmd = client.
+					 createContainerCmd(img.image())
+					.withName(uname+"-"+project.getIdentifier())
+					.withAttachStdin(img.attachStdin())
+					.withTty(img.tty())
+					.withWorkingDir(img.workdir())
+					;
+
+			var hostconfig = containercmd.getHostConfig();
+
+			hostconfig
+					.withPortBindings(PortBinding.parse(container.getBind() + ":" + command.getExposed()))
+					.withBinds(Bind.parse(container.getAppdir() + ":/app"))
+					;
+
+			resp = containercmd.exec();
+
 			container.setContainerId(resp.getId());
 			containerService.save(container);
 			

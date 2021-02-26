@@ -1,5 +1,6 @@
 package hu.emraxxor.web.ide.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -26,5 +27,9 @@ public class ContainerService extends BasicServiceAdapter<Container, Long, Conta
 	
 	public Optional<Container> findByContainerIdAndUser(String id, User user) {
 		return repository.findByContainerIdAndProject_user(id, user);
+	}
+	
+	public List<Container> findContainers(User user) {
+		return repository.findByProject_user(user);
 	}
 }

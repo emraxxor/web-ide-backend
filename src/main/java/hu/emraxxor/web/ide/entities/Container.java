@@ -55,7 +55,6 @@ public class Container {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "id")
-    @IgnoreField
 	private Long id;
     
     @Enumerated
