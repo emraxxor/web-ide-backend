@@ -11,8 +11,9 @@ import java.util.Optional;
 public enum DockerContainerImage {
 
 	NPM("web-ide/npm"),
-	NODE("web-ide/node", true, true)
-	
+	NODE("web-ide/node", true, true),
+	LARAVEL("web-ide/laravel"),
+	PHP("web-ide/php", true, true)
 	;
 	
 	private String image;

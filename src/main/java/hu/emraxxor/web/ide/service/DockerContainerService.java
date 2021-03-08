@@ -64,7 +64,7 @@ public class DockerContainerService {
 					.listContainersCmd()
 					.withShowSize(true)
   				    .withShowAll(true)
-					.withStatusFilter(Arrays.asList("exited"))
+					.withStatusFilter(Arrays.asList("exited","created"))
 					.exec();
 	}
 	

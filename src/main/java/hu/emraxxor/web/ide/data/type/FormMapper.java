@@ -18,11 +18,13 @@ public @interface FormMapper {
 
 	String source() default "";
 	
-	String sourceType() default "";
+	Class<?> sourceType() default Null.class;
 	
 	String target() default "";
 
-	String targetType() default "";
+	Class<?> targetType() default Null.class;
 	
 	String expression() default "";
+	
+	Class<?> converter() default Null.class;
 }

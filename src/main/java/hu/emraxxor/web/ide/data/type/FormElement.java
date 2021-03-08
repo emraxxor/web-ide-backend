@@ -35,23 +35,42 @@ public class FormElement<T> implements FormData {
 				if ( f.getAnnotation(IgnoreField.class)  != null ) continue;
 				
 				if ( (fm=f.getAnnotation(FormMapper.class)) != null ) {
-					Class<?> ftype = fm.sourceType().equals("") ? f.getType() : Class.forName(fm.sourceType());
-					Class<?> ttype = fm.targetType().equals("") ? f.getType() : Class.forName(fm.targetType());
+					Method targetMethod = null;
+					Method fromMethod = null;
+					Class<?> fromType = fm.sourceType().equals(Null.class) ? f.getType() : fm.sourceType() ;
+					Class<?> targetType = fm.targetType().equals(Null.class) ? f.getType() : fm.targetType() ;
 					
 					String sourceName = fm.source().equals("") ? f.getName() : fm.source();
 					String targetName = fm.target().equals("") ? f.getName() : fm.target();
 					
-					Method frm = from.getClass().getMethod( "get"  + sourceName , ftype );
-					Method trm = to.getClass().getMethod("set" + targetName  , ttype );
+					fromMethod = from.getClass().getMethod( "get"  + StringUtils.capitalize(sourceName) );
 					
-					Object value = frm.invoke( from );
+					try {
+						targetMethod = to.getClass().getMethod( "set"  + StringUtils.capitalize(targetName) , targetType );
+					} catch(Exception e) {
+						targetMethod = to.getClass().getMethod( "set"  + StringUtils.capitalize(targetName) , String.class );
+					}
+					
+					Object value = fromMethod.invoke( from );
+					
+					if ( !fm.converter().equals(Null.class) ) {
+						var converter = fm.converter().getDeclaredConstructor().newInstance();
+						if ( converter instanceof FormElementConverter<?> ) {
+							if ( value instanceof String ) {
+								value =  targetType.cast( ((FormElementConverter<?>) converter).convert(value.toString()) );
+							} else {
+								value = ((FormElementConverter<?>) converter).convert( value );
+							}
+						}
+					} 
 					
 					if ( fm.expression().equals("") ) {
-						trm.invoke( to ,  frm.invoke(from ) );
+							targetMethod.invoke( to ,  value );
 					} else {
-						value = Class.forName(fm.expression()).getDeclaredConstructor().newInstance();
-						trm.invoke(to , value);
+							value = Class.forName(fm.expression()).getDeclaredConstructor().newInstance();
+							targetMethod.invoke(to , value);
 					}
+					
 				}
 			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
@@ -59,6 +78,7 @@ public class FormElement<T> implements FormData {
 			e.printStackTrace();
 		}
 	}
+
 
 	@Synchronized
 	private static <F,T> void mapper(F from,T to) {

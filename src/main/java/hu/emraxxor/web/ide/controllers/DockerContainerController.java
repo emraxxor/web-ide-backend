@@ -12,13 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Container;
 
 import hu.emraxxor.web.ide.data.type.ContainerFormElement;
@@ -109,7 +107,6 @@ public class DockerContainerController {
 		return ResponseEntity.ok().build();
 	}
 	
-	
 	@PostMapping("/exec")
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<StatusResponse> start(@Valid @RequestBody DockerContainerExecCommand cmd) {
@@ -120,12 +117,9 @@ public class DockerContainerController {
     	return ResponseEntity.notFound().build();
 	}
 	
-	
 	@GetMapping("/inspect")
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<StatusResponse> inspect(@Valid DockerContainerElement inspect) {
 		return ResponseEntity.ok( StatusResponse.success( mapper.map( dockerContainerService.inspect(inspect) , DockerContainerInspectResponse.class) ) );
 	}
-
-
 }

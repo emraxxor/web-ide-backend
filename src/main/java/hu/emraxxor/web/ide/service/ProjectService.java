@@ -1,6 +1,7 @@
 package hu.emraxxor.web.ide.service;
 
 import java.io.File;
+import java.util.List;
 
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import hu.emraxxor.web.ide.config.UserProperties;
 import hu.emraxxor.web.ide.data.type.ProjectFormElement;
 import hu.emraxxor.web.ide.entities.Project;
+import hu.emraxxor.web.ide.entities.User;
 import hu.emraxxor.web.ide.repositories.ProjectRepository;
 import lombok.SneakyThrows;
 
@@ -30,7 +32,6 @@ public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRe
 	
 	@Autowired
 	private UserProperties userprops;
-
 	
 	@Transactional(value = TxType.MANDATORY)
 	private String identifier() {
@@ -40,7 +41,14 @@ public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRe
 		
 		return identifier;
 	}
+
+	public List<Project> projects(Long uid) {
+		return repository.findByUser_userId(uid); 
+	}
 	
+	public List<Project> projects(User user) {
+		return this.projects(user.getUserId());
+	}
 	
 	@SneakyThrows
 	public Project create(ProjectFormElement frm) {
