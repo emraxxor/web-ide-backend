@@ -7,6 +7,8 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 
+import lombok.Getter;
+
 /**
  * 
  * @author attila
@@ -18,6 +20,7 @@ import org.springframework.data.repository.CrudRepository;
 public abstract class BasicServiceAdapter<T, ID, R extends CrudRepository<T, ID>> implements BasicService<T, R> {
 
 	@Autowired
+	@Getter
 	protected R repository;
 	
 

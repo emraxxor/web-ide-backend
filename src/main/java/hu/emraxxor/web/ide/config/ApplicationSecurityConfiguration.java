@@ -48,8 +48,8 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 	protected void configure(HttpSecurity http) throws Exception {
 		http.
 			 csrf().disable()
-   		    .cors()
-   		    .and()
+			 .cors()
+			 .and()
    		    .headers()
    		    .frameOptions().disable()
    		    .and()

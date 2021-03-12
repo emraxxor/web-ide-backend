@@ -2,6 +2,7 @@ package hu.emraxxor.web.ide.service;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
@@ -48,6 +49,10 @@ public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRe
 	
 	public List<Project> projects(User user) {
 		return this.projects(user.getUserId());
+	}
+	
+	public Optional<Project> findByUserAndProjectId(User user, Long id) {
+		return repository.findByUserAndId(user, id);
 	}
 	
 	@SneakyThrows

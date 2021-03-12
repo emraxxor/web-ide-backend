@@ -1,7 +1,6 @@
 package hu.emraxxor.web.ide.controllers;
 
 import java.util.Arrays;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -19,7 +18,6 @@ import hu.emraxxor.web.ide.data.type.response.StatusResponse;
 import hu.emraxxor.web.ide.service.DockerContainerService;
 import hu.emraxxor.web.ide.service.ProjectService;
 import hu.emraxxor.web.ide.service.UserService;
-import com.github.dockerjava.api.model.Container;
 
 /**
  * 

@@ -35,6 +35,8 @@ import com.google.common.collect.Lists;
 
 import hu.emraxxor.web.ide.config.ApplicationUserRole;
 import hu.emraxxor.web.ide.data.type.IgnoreField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,6 +61,8 @@ import lombok.Setter;
 @NamedQueries({})
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class User implements Serializable {
 
