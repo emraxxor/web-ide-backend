@@ -3,11 +3,14 @@ package hu.emraxxor.web.ide.data.type.docker;
 import java.util.Arrays;
 import java.util.Optional;
 
+import io.swagger.annotations.ApiModel;
+
 /**
  * 
  * @author Attila Barna
  *
  */
+@ApiModel
 public enum DockerContainerImage {
 
 	NPM("web-ide/npm"),

@@ -24,7 +24,6 @@ public class BasicSecureFunctions {
     }
     
     private static boolean startsWith(String arg) {
-    	System.out.println(arg);
     	 return (arg.startsWith("%2e") || arg.startsWith("%5c") || arg.startsWith("%25")
                  || arg.startsWith("%c0") || arg.startsWith("%c1") || arg.startsWith("."));
     }

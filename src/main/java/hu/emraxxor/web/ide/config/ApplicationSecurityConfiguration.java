@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
 import hu.emraxxor.web.ide.components.filter.JWTAuthenticationFilter;
 import hu.emraxxor.web.ide.components.filter.JWTAuthorizationFilter;
@@ -54,7 +55,9 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
    		    .frameOptions().disable()
    		    .and()
 		 	.authorizeRequests()
+		    .antMatchers("/actuator/**").permitAll()
 		 	.antMatchers("/h2/**","/h2").permitAll()
+		 	.antMatchers("/swagger-ui/**","/v2/api-docs","/configuration/ui","/swagger-resources/**","/configuration/security","/swagger-ui.html","/webjars/**").permitAll()
 		 	.antMatchers("/api/user/**").access("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
 		 	.antMatchers("/api/project/**").access("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
 		 	.antMatchers("/api/admin/**").hasRole(ApplicationPermission.ROLE_ADMIN.get())
@@ -67,6 +70,7 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 		 	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		
 	}
+
 	
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {

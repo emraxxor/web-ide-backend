@@ -13,62 +13,74 @@ import java.util.function.BiFunction;
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.command.LogContainerResultCallback;
 
 import hu.emraxxor.web.ide.config.UserProperties;
 import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerCommand;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerElement;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerExecCommand;
-import hu.emraxxor.web.ide.data.type.docker.DockerContainerImage;
 import hu.emraxxor.web.ide.data.type.docker.consumer.FrameConsumerResultCallback;
 import hu.emraxxor.web.ide.data.type.docker.consumer.OutputFrame;
 import hu.emraxxor.web.ide.data.type.docker.consumer.ToStringConsumer;
+import hu.emraxxor.web.ide.entities.Project;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Synchronized;
+import lombok.extern.log4j.Log4j2;
 
 /**
+ * This DockerContainerService helps maintain containers. 
+ * Each container belongs to a project, a project can have only one container which can be selected and modified as desired.
  * 
  * @author Attila Barna
  *
  */
 @Service
+@AllArgsConstructor
+@Log4j2
 public class DockerContainerService {
 
-	@Autowired
 	private DockerClient client;
 	
-	@Autowired
 	private UserProperties userprops;
 	
-	@Autowired
 	private UserService userService;
 	
-	@Autowired
 	private ContainerService containerService;
 	
-	@Autowired
 	private ProjectService projectService;
 	
+	/**
+	 * List of the created containers 
+	 * @return
+	 */
 	@Synchronized
 	public 	List<Container> containers() {
 		return client
 					.listContainersCmd()
 					.withShowSize(true)
   				    .withShowAll(true)
-					.withStatusFilter(Arrays.asList("exited","created"))
+					.withStatusFilter(Arrays.asList("exited","restarting", "running", "paused", "created"))
 					.exec();
 	}
 	
 	
+	/**
+	 * Checks whether the port is available on the server or not 
+	 * @param port
+	 * @return
+	 */
 	public static boolean available(int port) {
 		    if (port < 3500 || port > 65000) 
 		    	return false;
@@ -95,6 +107,9 @@ public class DockerContainerService {
 		    return false;
 	}
 	
+	/**
+	 * It generates a random port
+	 */
 	@Synchronized
 	private int randomAvailablePort() {
 		int port = new Random().nextInt(65000) + 3500;
@@ -103,19 +118,49 @@ public class DockerContainerService {
 		
 		return port;
 	}
+
+	/**
+	 * Gets the container for the given project
+	 * @param project
+	 * @return
+	 */
+	@Synchronized
+	public Optional<Container> containerByProject(Project project) {
+		var user = project.getUser();
+		for(var c : containers()) {
+				if ( Arrays.asList( c.getNames() ).stream()
+						.anyMatch( e -> e.equals( String.format("/%s-%s", user.getNeptunId(),project.getIdentifier()) ) ) ) {
+					return Optional.of(c);
+				}
+		}
+		return Optional.empty();
+	}
 	
-	
+	/**
+	 * Stops the given container
+	 * @param el
+	 * @return
+	 */
 	@Synchronized
 	public Boolean stopContainer(DockerContainerElement el) {
 		return authorizedCmd(el, ( e,f ) ->  f.stopContainerCmd(e.getContainerId()).exec() ).isEmpty();
 	}
 	
 	
+	/**
+	 * Kills the container
+	 * @param el
+	 */
 	@Synchronized
 	public void killContainer(DockerContainerElement el) {
 		client.killContainerCmd(el.getId());
 	}
 	
+	/**
+	 * It is suitable for running a command on a given container.
+	 * @param exec
+	 * @return
+	 */
 	@Synchronized
 	@SneakyThrows
 	public Optional<Object> exec(DockerContainerExecCommand exec) {
@@ -149,6 +194,10 @@ public class DockerContainerService {
 		return Optional.empty();
 	}
 	
+	/**
+	 * Free port for the container
+	 * @return
+	 */
 	@Transactional(value = TxType.MANDATORY)
 	private int randomBind() {
 		var port = randomAvailablePort();
@@ -159,20 +208,77 @@ public class DockerContainerService {
 		return port;
 	}
 
+	/**
+	 * Output of the docker log command
+	 * @param cmd
+	 * @return
+	 */
 	@Synchronized
 	public Optional<String> log(DockerContainerElement cmd) {
-	    var callback = new FrameConsumerResultCallback();
-	    var consumer = new ToStringConsumer();
-		authorizedCmd(cmd, ( e,f ) ->  f.logContainerCmd(e.getContainerId()).exec(callback) );
-		return Optional.ofNullable( consumer.toString(Charset.defaultCharset()) );
+		var res = authorizedCmd(cmd, ( e,f ) -> { 
+			var strBuilder = new StringBuilder();
+			try {
+			
+				 f
+						 		.logContainerCmd(e.getContainerId())
+						 		.withStdErr(true)
+						 		.withStdOut(true)
+						 		.exec(new ResultCallback.Adapter<Frame>(){
+									public void onNext(Frame item) {
+										strBuilder.append(item.toString() + '\n');
+									}
+						 		}).awaitCompletion();
+
+			} catch (InterruptedException e1) {
+				log.error(e1);
+			}	
+			return strBuilder;
+		});
+		return Optional.ofNullable( res.toString() );
 	}
 	
 	
+	/**
+	 * Output of the docker log command
+	 * @param cmd
+	 * @return
+	 */
+	@Synchronized
+	public Optional<String> log(Project project) {
+		return log(new DockerContainerElement(project.getContainer().getContainerId() ));
+	}
+	
+	/**
+	 * Starts the given container by its id
+	 * @param cmd
+	 * @return
+	 */
 	public Boolean start(DockerContainerElement cmd) {
 		return authorizedCmd(cmd, ( e,f ) ->  f.startContainerCmd(e.getContainerId()).exec() ).isEmpty();
 	}
 	
+	/**
+	 * Starts the container that belongs to the given project
+	 * @param cmd
+	 * @return
+	 */
+	public Boolean start(Project project) {
+		try {
+			return start( new DockerContainerElement( project.getContainer().getContainerId() ));
+		} catch(IllegalStateException e) {
+			log.error(e);
+		}
+		return false;
+	}
+	
 
+	/**
+	 * Useful for repetable commands
+	 * @param <T>
+	 * @param el
+	 * @param fn
+	 * @return
+	 */
 	@Synchronized
 	private <T extends hu.emraxxor.web.ide.entities.Container> Optional<?> authorizedCmd(DockerContainerElement el, BiFunction<T,DockerClient,?> fn) {
 		var curr = userService.curr();
@@ -183,24 +289,43 @@ public class DockerContainerService {
 	}
 
 	
+	/**
+	 * Inspects the given container
+	 * @param inspectcmd
+	 * @return
+	 */
+	public InspectContainerResponse inspect(Project project) {
+		return inspect( new DockerContainerElement( String.format("/%s-%s", project.getUser().getNeptunId(),project.getIdentifier())  ) );
+	}
+	
+	
+	/**
+	 * Inspects the given container
+	 * @param inspectcmd
+	 * @return
+	 */
 	@Synchronized
 	public InspectContainerResponse inspect(DockerContainerElement inspectcmd) {
 		return client.inspectContainerCmd(inspectcmd.getId()).exec();
 	}
 	
+	/**
+	 * Creates a new container with the given image
+	 * @param command
+	 * @return
+	 */
 	@Synchronized
 	@Transactional
 	@SneakyThrows
 	public 	Optional<CreateContainerResponse> create(DockerContainerCommand command) {
-		var dockerImg = DockerContainerImage.findByName(command.getImage());
+		var img = command.getImage();
 		var user = userService.current().get();
 		var cproject = projectService.find(command.getProjectId());
 		
-		if ( dockerImg.isPresent() && cproject.isPresent()  && cproject.get().getUser().equals(user) ) {
+		if ( cproject.isPresent()  && cproject.get().getUser().equals(user) ) {
 			CreateContainerResponse resp;
 			var project = cproject.get();
 			var container = project.getContainer();
-			var img = dockerImg.get();
 			var uname = user.getNeptunId();
 			var userdir = userprops.getStorage();
 			var bindport = randomBind();
@@ -211,7 +336,7 @@ public class DockerContainerService {
 									.appdir( appdir )
 									.bind( bindport )
 									.name( project.getIdentifier() )
-									.exposed( Integer.valueOf(command.getExposed() ))
+									.exposed( command.getExposed() )
 									.status(ContainerStatus.CREATED)
 									.image(img)
 									.userdir(userdir+"/"+uname).build();

@@ -17,6 +17,7 @@ import hu.emraxxor.web.ide.data.type.ProjectFormElement;
 import hu.emraxxor.web.ide.entities.Project;
 import hu.emraxxor.web.ide.entities.User;
 import hu.emraxxor.web.ide.repositories.ProjectRepository;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 /**
@@ -26,12 +27,11 @@ import lombok.SneakyThrows;
  */
 @Service
 @Transactional
+@AllArgsConstructor
 public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRepository> {
 
-	@Autowired
 	private UserService userService;
 	
-	@Autowired
 	private UserProperties userprops;
 	
 	@Transactional(value = TxType.MANDATORY)

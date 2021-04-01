@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -103,6 +103,53 @@ public class ProjectFileManagerController {
 		return ResponseEntity.notFound().build();
 	}
 	
+	@PutMapping("/file/**")
+	@SneakyThrows
+	public ResponseEntity<StatusResponse> updateFile(HttpServletRequest request, @PathVariable("projectid") Long projectId,
+		@Valid @RequestBody Map<String, Object> data
+		) {
+		var file = request.getRequestURI().split(request.getContextPath() + "/file/")[1];
+		var user = userService.curr();
+		var project = projectService.findByUserAndProjectId(user, projectId);
+		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
+			var userdir = userprops.getStorage();
+			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
+			appdir.append(String.format("/%s", file ));
+			
+			var ffile = new File(appdir.toString());
+			
+			FileUtils.writeByteArrayToFile(ffile , ((String)data.get("data")).getBytes() );
+			return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+		}
+		return ResponseEntity.notFound().build();
+	}
+	
+	
+	@PutMapping("/rename/file/**")
+	@SneakyThrows
+	public ResponseEntity<StatusResponse> renameFile(HttpServletRequest request, @PathVariable("projectid") Long projectId,
+		@Valid @RequestBody ProjectFile projectFile
+		) {
+		var file = request.getRequestURI().split(request.getContextPath() + "/file/")[1];
+		var user = userService.curr();
+		var project = projectService.findByUserAndProjectId(user, projectId);
+		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
+			var userdir = userprops.getStorage();
+			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
+			
+			var oldfile = new File(appdir.toString() + '/' + file );
+			var newfile = new File(appdir.toString() + '/' + projectFile.getName() ); 
+			
+			if ( oldfile.exists() ) {
+				if ( oldfile.renameTo(newfile) ) {
+					return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+				}
+			} 
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	
 	@GetMapping("/file/**")
 	@SneakyThrows
 	public ResponseEntity<StatusResponse> getFile(HttpServletRequest request, @PathVariable("projectid") Long projectId
@@ -146,15 +193,22 @@ public class ProjectFileManagerController {
 			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
 			var files = Lists.newArrayList();
 			
-			if ( dir.isPresent() ) 
-				appdir.append(String.format("/%s", dir.get()));
+			if ( dir.isPresent() ) { 
+				var folder = dir.get();
+				if ( folder.startsWith("/") ) {
+					appdir.append(String.format("%s", dir.get()));
+				} else {
+					appdir.append(String.format("/%s", dir.get()));
+				}
+			}
 			
 	        try (Stream<Path> paths = Files.walk(Paths.get(appdir.toString()),1)) {
 	            paths
 	            	.filter(  e -> !e.getFileName().toString().equals(project.get().getIdentifier()) )
 	            	.forEach( e -> { 
 	            		 if ( Files.isDirectory(e) ) {
-	            			 files.add( ProjectFile.builder().type(ProjectFileType.DIR).name(e.getFileName().toString()).build() );
+	            			 if ( !e.toFile().getAbsolutePath().equals(appdir.toString()) )
+	            				 files.add( ProjectFile.builder().type(ProjectFileType.DIR).name(e.getFileName().toString()).build() );
 	            		 } else {
 	            			 files.add( ProjectFile.builder().type(ProjectFileType.FILE).name(e.getFileName().toString()).build() );
 	            		 }

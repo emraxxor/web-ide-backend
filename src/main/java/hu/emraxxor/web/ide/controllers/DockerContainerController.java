@@ -109,11 +109,10 @@ public class DockerContainerController {
 	
 	@PostMapping("/exec")
 	@PreAuthorize("hasAuthority('docker:container')")
-	public ResponseEntity<StatusResponse> start(@Valid @RequestBody DockerContainerExecCommand cmd) {
+	public ResponseEntity<StatusResponse> exec(@Valid @RequestBody DockerContainerExecCommand cmd) {
 		Optional<Object> res = dockerContainerService.exec(cmd);
-		if ( res.isPresent() ) {
+		if ( res.isPresent() ) 
 			 return ResponseEntity.ok( StatusResponse.success( res.get() ) );
-		}
     	return ResponseEntity.notFound().build();
 	}
 	

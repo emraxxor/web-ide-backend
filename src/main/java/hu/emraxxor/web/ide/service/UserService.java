@@ -2,7 +2,6 @@ package hu.emraxxor.web.ide.service;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,17 +9,18 @@ import org.springframework.transaction.annotation.Transactional;
 import hu.emraxxor.web.ide.data.type.UserFormElement;
 import hu.emraxxor.web.ide.entities.User;
 import hu.emraxxor.web.ide.repositories.UserRepository;
+import lombok.AllArgsConstructor;
 
 /**
  * 
- * @author attila
+ * @author Attila Barna
  *
  */
 @Service
 @Transactional
+@AllArgsConstructor
 public class UserService {
 
-	@Autowired
 	private UserRepository repository;
 	
 	public Optional<User> findUserByNeptunId(String neptunId) {

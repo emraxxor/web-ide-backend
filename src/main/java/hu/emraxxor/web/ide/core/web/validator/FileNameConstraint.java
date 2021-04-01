@@ -14,7 +14,7 @@ import javax.validation.Payload;
 @Target( { ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FileNameConstraint {
-    String message() default "Invalid phone number";
+    String message() default "Invalid file name";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
