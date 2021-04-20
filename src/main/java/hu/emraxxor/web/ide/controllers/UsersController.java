@@ -2,23 +2,23 @@ package hu.emraxxor.web.ide.controllers;
 
 import java.io.IOException;
 
+import hu.emraxxor.web.ide.data.type.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hu.emraxxor.web.ide.data.type.FileInfo;
-import hu.emraxxor.web.ide.data.type.FormElement;
-import hu.emraxxor.web.ide.data.type.ImageData;
-import hu.emraxxor.web.ide.data.type.UserFormElement;
 import hu.emraxxor.web.ide.data.type.response.StatusResponse;
 import hu.emraxxor.web.ide.service.ProfileStorageService;
 import hu.emraxxor.web.ide.service.UserService;
+
+import javax.validation.Valid;
 
 
 /**
@@ -38,7 +38,11 @@ public class UsersController {
 	
 	@Autowired
 	private ModelMapper mapper;
-	
+
+	@Autowired
+	private PasswordEncoder encoder;
+
+
 	@GetMapping("/info")
 	public UserFormElement info() {
 		var curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -67,19 +71,47 @@ public class UsersController {
 			 return ResponseEntity.notFound().build();
 		}
 	}
-	
-	@PutMapping
-	public ResponseEntity<StatusResponse> update(@RequestBody UserFormElement data) {
+
+
+	@PutMapping("/profile")
+	public ResponseEntity<StatusResponse> update(@Valid  @RequestBody UserProfileFormElement data) {
 		UserFormElement curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		var u = userService.findById( curr.getUserId() );
 		if ( u.isPresent() ) {
 			var persistent = u.get();
-			FormElement.update( data , persistent);
-			
-			if ( !persistent.getUserMail().equals(curr.getUserMail()) && userService.findUserByEmail(data.getUserMail()).isPresent() ) 
-				return ResponseEntity.badRequest().body(StatusResponse.error(data));
-	
+			FormElement.updateFrom( data , persistent);
 			return ResponseEntity.ok(  StatusResponse.success( FormElement.convertTo( userService.save(persistent)  , UserFormElement.class ) ));
+		}
+		return ResponseEntity.notFound().build();
+	}
+	
+	@PutMapping("/personal")
+	public ResponseEntity<StatusResponse> update(@RequestBody UserProfilePersonalFormElement data) {
+		UserFormElement curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		var u = userService.findById( curr.getUserId() );
+		if ( u.isPresent() ) {
+			var persistent = u.get();
+			if ( data.getUserMail() != null && data.getOldUserPassword() != null && encoder.matches(data.getOldUserPassword(), persistent.getUserPassword()) ) {
+				if ( !persistent.getUserMail().equals(curr.getUserMail()) && userService.findUserByEmail(data.getUserMail()).isPresent() )
+					return ResponseEntity.badRequest().body(StatusResponse.error(data));
+
+				if ( data.getUserPassword() != null && data.getUserPassword().length() > 3 && !data.getUserPassword().equals(data.getConfirmUserPassword()) )
+					return ResponseEntity.badRequest().body(StatusResponse.error(data));
+
+				if ( data.getUserPassword() != null && !data.getUserPassword().equals("") && data.getUserPassword().length() < 5)
+					return ResponseEntity.badRequest().body(StatusResponse.error(data));
+
+				if ( !data.getUserMail().equals(curr.getUserMail())  )
+					persistent.setUserMail(data.getUserMail());
+
+				if ( data.getUserPassword() != null && data.getUserPassword().length() > 5 )
+					persistent.setUserPassword(encoder.encode(data.getUserPassword()));
+
+				return ResponseEntity.ok(  StatusResponse.success( FormElement.convertTo( userService.save(persistent)  , UserFormElement.class ) ));
+			}
+
+			return ResponseEntity.ok(  StatusResponse.error(data) );
+
 		}
 		 return ResponseEntity.notFound().build();
 	}
