@@ -1,20 +1,19 @@
 package hu.emraxxor.web.ide.controllers;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
+import hu.emraxxor.web.ide.data.type.ProjectFormDeleteElement;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import hu.emraxxor.web.ide.data.type.ProjectFormElement;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerElement;
@@ -60,17 +59,25 @@ public class ProjectController {
 	public ResponseEntity<StatusResponse> store(@Valid @RequestBody ProjectFormElement data) {
 		return ResponseEntity.ok( StatusResponse.success( new ProjectFormElement( projectService.create(data) ) ));
 	}
-	
+
+
+	@ApiOperation(value = "Removes the given project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project is deleted successfully" ),
+	})
+	@DeleteMapping("/{id}")
+	@PreAuthorize("hasAuthority('docker:container')")
+	public ResponseEntity<StatusResponse> delete(@PathVariable Long id) {
+		return ResponseEntity.ok( StatusResponse.success( projectService.delete(new ProjectFormDeleteElement(id))  ));
+	}
+
 	@GetMapping("/inspect/{id}")
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<StatusResponse> inspect(@ApiParam(value = "Id of the project", required = true) @PathVariable Long id) {
 		var project = projectService.findByUserAndProjectId(userService.curr(), id);
 		if ( project.isPresent() ) {
-			var container = dockerContainerService.containerByProject(project.get());
-			if ( container.isPresent() ) {
-				return ResponseEntity.ok(StatusResponse.success( mapper.map( dockerContainerService.inspect(project.get()) , DockerContainerInspectResponse.class) ) );
-			}
-		} 
+			return ResponseEntity.ok(StatusResponse.success( mapper.map( dockerContainerService.inspect(project.get()) , DockerContainerInspectResponse.class) ) );
+		}
     	return ResponseEntity.notFound().build();
 	}
 	
@@ -96,11 +103,8 @@ public class ProjectController {
 		) {
 		var project = projectService.findByUserAndProjectId(userService.curr(), id);
 		if ( project.isPresent() ) {
-			var container = dockerContainerService.containerByProject(project.get());
-			if ( container.isPresent() ) {
-				return ResponseEntity.ok(StatusResponse.success( dockerContainerService.log(project.get()) ));
-			}
-		} 
+			return ResponseEntity.ok(StatusResponse.success( dockerContainerService.log(project.get()) ));
+		}
     	return ResponseEntity.notFound().build();
 	}
 
@@ -111,8 +115,6 @@ public class ProjectController {
 		) {
 		var project = projectService.findByUserAndProjectId(userService.curr(), id);
 		if ( project.isPresent() ) {
-			var container = dockerContainerService.containerByProject(project.get());
-			if ( container.isPresent() ) {
 				if ( dockerContainerService.start(project.get()) ) {
 					return ResponseEntity.ok(
 							StatusResponse.success(
@@ -125,13 +127,71 @@ public class ProjectController {
 				} else {
 					return ResponseEntity.ok(StatusResponse.error("Failed to start container.!"));
 				}
-			} else {
-				return ResponseEntity.ok(StatusResponse.error("A project can only be started with an existing container!"));
-			}
-		} 
+		}
     	return ResponseEntity.notFound().build();
 	}
-	
+
+	@PostMapping("/restart/{id}")
+	@PreAuthorize("hasAuthority('docker:container')")
+	public ResponseEntity<StatusResponse> restartProjectContainer(
+			@ApiParam(value = "Id of the project", required = true) @PathVariable Long id
+	) {
+		var project = projectService.findByUserAndProjectId(userService.curr(), id);
+		if ( project.isPresent() ) {
+			if ( dockerContainerService.restartContainer(project.get()) ) {
+				return ResponseEntity.ok(
+						StatusResponse.success(
+								mapper.map(
+										dockerContainerService.inspect(project.get()) ,
+										DockerContainerInspectResponse.class)
+						)
+
+				);
+			} else {
+				return ResponseEntity.ok(StatusResponse.error("Failed to restart container.!"));
+			}
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@PutMapping("/rename/{id}")
+	public ResponseEntity<StatusResponse> renameProject(
+			@ApiParam(value = "Id of the project", required = true) @PathVariable Long id,
+			@Valid @RequestBody  ProjectFormElement formElement
+	) {
+		var project = projectService.findByUserAndProjectId(userService.curr(), id);
+		if ( project.isPresent() ) {
+			var currentProject = project.get();
+			currentProject.setName(formElement.getName());
+			currentProject = projectService.save(currentProject);
+			return ResponseEntity.ok(StatusResponse.success(new ProjectFormElement(currentProject)));
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@PostMapping("/stop/{id}")
+	@PreAuthorize("hasAuthority('docker:container')")
+	public ResponseEntity<StatusResponse> stopProjectContainer(
+			@ApiParam(value = "Id of the project", required = true) @PathVariable Long id
+	) {
+		var project = projectService.findByUserAndProjectId(userService.curr(), id);
+		if ( project.isPresent() ) {
+			if ( dockerContainerService.stopContainer(project.get()) ) {
+				return ResponseEntity.ok(
+						StatusResponse.success(
+								mapper.map(
+										dockerContainerService.inspect(project.get()) ,
+										DockerContainerInspectResponse.class)
+						)
+
+				);
+			} else {
+				return ResponseEntity.ok(StatusResponse.error("Failed to stop container.!"));
+			}
+		}
+		return ResponseEntity.notFound().build();
+	}
+
 	@GetMapping("/{id}")
 	public ResponseEntity<StatusResponse> projectById(@PathVariable Long id) {
 		var user = userService.curr();
@@ -141,6 +201,20 @@ public class ProjectController {
 			return ResponseEntity.ok(StatusResponse.success(new ProjectFormElement(project.get())));
 		
 		return ResponseEntity.notFound().build();
+	}
+
+	@GetMapping("/simple")
+	public ResponseEntity<StatusResponse> projectWithoutContainers() {
+		var curr = userService.curr();
+
+		return ResponseEntity.ok(StatusResponse
+				.success(
+						projectService
+								.projects(userService.curr())
+								.stream()
+								.map(e -> new ProjectFormElement(e) )
+								.collect(Collectors.toList())
+				));
 	}
 
 	@GetMapping

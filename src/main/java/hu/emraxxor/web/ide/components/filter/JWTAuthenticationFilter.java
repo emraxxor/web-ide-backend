@@ -42,7 +42,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	    
 	    private static final String COOKIE_NAME = "token";
 
-	    private static final int EXPIRATION =  30 * 60 * 1000;
+	    private static final int EXPIRATION =  240 * 60 * 1000;
 	    
 	    private String secret;
 
@@ -95,8 +95,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					  .addSerializationExclusionStrategy(strategy)
 					  .create();
 
-			
-	        
 	        String token = JWT.create()
 	        		.withSubject(auth.getName())
 	        		.withIssuedAt(new Date(now))

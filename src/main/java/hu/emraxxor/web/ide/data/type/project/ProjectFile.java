@@ -22,4 +22,6 @@ public class ProjectFile {
 	
 	@NotNull
 	String data;
+
+	String parent;
 }

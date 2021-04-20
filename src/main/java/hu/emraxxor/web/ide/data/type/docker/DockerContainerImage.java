@@ -16,7 +16,9 @@ public enum DockerContainerImage {
 	NPM("web-ide/npm"),
 	NODE("web-ide/node", true, true),
 	LARAVEL("web-ide/laravel"),
-	PHP("web-ide/php", true, true)
+	PHP("web-ide/php", true, true),
+	REACT("web-ide/react"),
+	ANGULAR("web-ide/angular")
 	;
 	
 	private String image;
