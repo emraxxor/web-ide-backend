@@ -82,7 +82,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 				var roles = jwt.getClaim("roles").asList(String.class);
 				var principal =  new Gson().fromJson( 
 									new String( Base64Utils.decodeFromString( jwt.getClaim("user").asString() ) ) ,
-									 new TypeToken<UserFormElement>(){}.getType()
+									new TypeToken<UserFormElement>(){}.getType()
 								);
 				return new UsernamePasswordAuthenticationToken(principal, null, roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
 			}

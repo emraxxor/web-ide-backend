@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,7 +56,24 @@ public class DockerContainerController {
 	public ResponseEntity<List<Container>> list() {
 		return ResponseEntity.ok( dockerContainerService.containers() );
 	}
-	
+
+	@GetMapping("/running")
+	@PreAuthorize("hasAuthority('docker:container') and hasAuthority('docker:admin')")
+	public ResponseEntity<List<Container>> listRunningContainers() {
+		return ResponseEntity.ok( dockerContainerService.running() );
+	}
+
+
+	@PutMapping
+	@PreAuthorize("hasAuthority('docker:container')")
+	public ResponseEntity<CreateContainerResponse> update(@Valid @RequestBody DockerContainerCommand cmd) {
+		var res = dockerContainerService.update(cmd);
+		if ( res.isPresent() ) {
+			return ResponseEntity.ok( res.get() );			
+		} 
+    	return ResponseEntity.notFound().build();
+	}
+
 	@PostMapping
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<CreateContainerResponse> create(@Valid @RequestBody DockerContainerCommand cmd) {

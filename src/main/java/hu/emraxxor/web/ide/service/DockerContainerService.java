@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.function.BiFunction;
 
+import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import javax.transaction.Transactional.TxType;
 
@@ -23,7 +24,6 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
 
 import hu.emraxxor.web.ide.config.UserProperties;
 import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
@@ -60,7 +60,13 @@ public class DockerContainerService {
 	private ContainerService containerService;
 	
 	private ProjectService projectService;
-	
+
+
+	@PostConstruct
+	public void postConstruct() {
+		projectService.setDockerContainerService(this);
+	}
+
 	/**
 	 * List of the created containers 
 	 * @return
@@ -144,6 +150,30 @@ public class DockerContainerService {
 	@Synchronized
 	public Boolean stopContainer(DockerContainerElement el) {
 		return authorizedCmd(el, ( e,f ) ->  f.stopContainerCmd(e.getContainerId()).exec() ).isEmpty();
+	}
+
+	@Synchronized
+	public Boolean stopContainer(Project project) {
+		var id = project.getId();
+		if ( project.getContainer() != null ) {
+			var container = new DockerContainerElement(project.getContainer().getContainerId());
+			var inspectResponse = this.inspect(container);
+			if ( !inspectResponse.getState().getStatus().equals("created") ) {
+				return authorizedCmd(container, (e, f) -> f.stopContainerCmd(e.getContainerId()).exec()).isEmpty();
+			}
+			return true;
+		}
+		return true;
+	}
+
+	@Synchronized
+	public Boolean removeContainer(Project project) {
+		var id = project.getId();
+		if ( project.getContainer() != null ) {
+			var container = new DockerContainerElement(project.getContainer().getContainerId());
+			return authorizedCmd(container, (e, f) -> f.removeContainerCmd(e.getContainerId()).exec()).isEmpty();
+		}
+		return true;
 	}
 	
 	
@@ -254,7 +284,19 @@ public class DockerContainerService {
 	 * @return
 	 */
 	public Boolean start(DockerContainerElement cmd) {
-		return authorizedCmd(cmd, ( e,f ) ->  f.startContainerCmd(e.getContainerId()).exec() ).isEmpty();
+		var inspect =  authorizedCmd( cmd , (e,f) -> f.inspectContainerCmd(e.getContainerId()).exec() );
+		if ( inspect.isPresent() ) {
+			var inspectResponse = (InspectContainerResponse) inspect.get() ;
+			if ( !inspectResponse.getState().getStatus().equals("true") ) {
+				try {
+					return authorizedCmd(cmd, (e, f) -> f.startContainerCmd(e.getContainerId()).exec()).isEmpty();
+				} catch(Exception e) {
+					log.error(e.getMessage() , e);
+				}
+			}
+
+		}
+		return true;
 	}
 	
 	/**
@@ -288,7 +330,16 @@ public class DockerContainerService {
         return Optional.empty();
 	}
 
-	
+	public boolean restartContainer(Project project) {
+	    var container = project.getContainer();
+	    if ( container != null && container.getContainerId() != null ){
+			client.stopContainerCmd(container.getContainerId()).exec();
+			client.removeContainerCmd(container.getContainerId()).exec();
+			return  true;
+		}
+	    return  false;
+	}
+
 	/**
 	 * Inspects the given container
 	 * @param inspectcmd
@@ -296,6 +347,18 @@ public class DockerContainerService {
 	 */
 	public InspectContainerResponse inspect(Project project) {
 		return inspect( new DockerContainerElement( String.format("/%s-%s", project.getUser().getNeptunId(),project.getIdentifier())  ) );
+	}
+
+	/**
+	 * Running containers
+	 * @return
+	 */
+	public List<Container> running() {
+		return client
+				.listContainersCmd()
+				.withShowSize(true)
+				.withShowAll(false)
+				.exec();
 	}
 	
 	
@@ -306,8 +369,70 @@ public class DockerContainerService {
 	 */
 	@Synchronized
 	public InspectContainerResponse inspect(DockerContainerElement inspectcmd) {
-		return client.inspectContainerCmd(inspectcmd.getId()).exec();
+		return client.inspectContainerCmd(inspectcmd.getId()).withContainerId(inspectcmd.getId()).exec();
 	}
+
+	/**
+	 * Creates a new container with the given image
+	 * @param command
+	 * @return
+	 */
+	@Synchronized
+	@Transactional
+	@SneakyThrows
+	public 	Optional<CreateContainerResponse> update(DockerContainerCommand command) {
+		var img = command.getImage();
+		var user = userService.current().get();
+		var cproject = projectService.find(command.getProjectId());
+		
+		if ( cproject.isPresent()  && cproject.get().getUser().equals(user) ) {
+			CreateContainerResponse resp;
+			var project = cproject.get();
+			var container = project.getContainer();
+			var uname = user.getNeptunId();
+			var userdir = userprops.getStorage();
+			var bindport = randomBind();
+			var appdir = userdir + "/" + uname +  "/projects/" + project.getIdentifier();
+
+			if ( container != null ) {		
+				client.stopContainerCmd(container.getContainerId()).exec();
+				client.removeContainerCmd(container.getContainerId()).exec();
+					
+				container.setAppdir(appdir);
+				container.setBind(bindport);
+				container.setExposed(command.getExposed());
+				container.setStatus(ContainerStatus.CREATED);
+				container.setImage(img);
+				container.setUserdir(userdir+"/"+uname);
+			
+				var containercmd = client.
+						 createContainerCmd(img.image())
+						.withName(uname+"-"+project.getIdentifier())
+						.withAttachStdin(img.attachStdin())
+						.withTty(img.tty())
+						.withWorkingDir(img.workdir())
+						;
+
+				var hostconfig = containercmd.getHostConfig();
+
+				System.out.println("Port binding : " + container.getBind() + " : " + command.getExposed());
+
+				hostconfig
+						.withPortBindings(PortBinding.parse(container.getBind() + ":" + command.getExposed()  ))
+						.withBinds(Bind.parse(container.getAppdir() + ":/app"))
+					;
+
+				resp = containercmd.exec();
+				container.setContainerId(resp.getId());
+				containerService.save(container);
+				return Optional.of(resp);
+			}
+		}
+		return Optional.empty();
+	}
+
+	
+	
 	
 	/**
 	 * Creates a new container with the given image
@@ -362,10 +487,8 @@ public class DockerContainerService {
 					;
 
 			resp = containercmd.exec();
-
 			container.setContainerId(resp.getId());
 			containerService.save(container);
-			
 			return Optional.of(resp);
 		}
 		return Optional.empty();

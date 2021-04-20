@@ -7,6 +7,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import hu.emraxxor.web.ide.config.ApplicationUserRole;
 import hu.emraxxor.web.ide.entities.User;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -42,9 +43,11 @@ public class UserFormElement extends FormElement<User> {
 
 	private Number zip;
 	
-	@IgnoreField
-	private String role;
+	private ApplicationUserRole role;
 	
 	private LocalDateTime createdOn;
+
+	@IgnoreField
+	private String oldUserPassword;
 
 }

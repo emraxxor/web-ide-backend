@@ -207,7 +207,6 @@ public class FormElement<T> implements FormData {
 					continue;
 				
 				// try to convert by name 
-				System.out.println("UPDATING" + f.getName());
 				Method s = clazz.getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
 				s.invoke(object,  this.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(this) );
 				
@@ -296,7 +295,6 @@ public class FormElement<T> implements FormData {
 				if ( f.getAnnotation(EntityProperty.class) != null ) 
 					continue;
 
-				
 				Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
 				s.invoke(to, from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) );
 				
@@ -307,6 +305,36 @@ public class FormElement<T> implements FormData {
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			log.error(e);
 		}	
+	}
+
+	public static <Y,Z>  void updateFrom(Y from, Z to) {
+		Field[] fields = from.getClass().getDeclaredFields();
+		try {
+			for(Field f : fields ) {
+				if ( f.getAnnotation(IgnoreField.class)  != null ) continue;
+
+				if ( f.getAnnotation(TimestampToString.class) != null ) {
+					Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
+
+					s.invoke(to,
+							DefaultDateFormatter.format(
+									(Timestamp) from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) ,
+									f.getAnnotation(TimestampToString.class).type()
+							)
+					);
+
+					continue;
+				}
+
+				if ( f.getAnnotation(EntityProperty.class) != null )
+					continue;
+
+				Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
+				s.invoke(to, from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) );
+			}
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			log.error(e);
+		}
 	}
 }
 

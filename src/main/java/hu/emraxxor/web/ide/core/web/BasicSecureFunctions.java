@@ -1,5 +1,8 @@
 package hu.emraxxor.web.ide.core.web;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -33,4 +36,9 @@ public class BasicSecureFunctions {
     			||
     			Arrays.asList(arg.split("\\\\")).stream().anyMatch(e -> startsWith(e)) ;
     }
+
+    public static String decode(String value) throws UnsupportedEncodingException {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
+    }
+
 }

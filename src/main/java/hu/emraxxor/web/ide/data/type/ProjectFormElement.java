@@ -32,7 +32,15 @@ public class ProjectFormElement extends FormElement<Project> {
     @ApiModelProperty(hidden = true)
     private Container container;
 
+    @IgnoreField
+    @ApiModelProperty(hidden = true)
+    private ProjectFormContainerElement containerElement;
+
     public ProjectFormElement(Project e) {
     	super(e);
+
+    	if ( e.getContainer() != null ) {
+            this.containerElement = new ProjectFormContainerElement(e.getContainer());
+        }
     }
 }
