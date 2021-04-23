@@ -56,7 +56,6 @@ public class ApplicationUser implements UserDetails, CurrentWebUserSession<UserF
 		this.user = u;
 	}
 
-	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return grantedAuthorities;
@@ -91,7 +90,6 @@ public class ApplicationUser implements UserDetails, CurrentWebUserSession<UserF
 	public boolean isEnabled() {
 		return isEnabled;
 	}
-
 
 	@Override
 	public CurrentUserInfo<UserFormElement> current() {

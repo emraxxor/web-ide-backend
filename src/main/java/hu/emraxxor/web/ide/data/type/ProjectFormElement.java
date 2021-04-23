@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class ProjectFormElement extends FormElement<Project> {
 
 	@NotNull
-	@ApiModelProperty(notes = "Name of the project", name = "name", required = false, example = "name_of_the_project" )
+	@ApiModelProperty(notes = "Name of the project", name = "name", example = "name_of_the_project" )
     private String name;
 
 	@ApiModelProperty(notes = "Id of the project", required = true, example = "1")

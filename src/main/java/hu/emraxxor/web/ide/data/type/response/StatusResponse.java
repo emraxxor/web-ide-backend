@@ -3,7 +3,6 @@ package hu.emraxxor.web.ide.data.type.response;
 /**
  * 
  * @author Attila Barna
- * @category infovip.web.response
  */
 public class StatusResponse {
 

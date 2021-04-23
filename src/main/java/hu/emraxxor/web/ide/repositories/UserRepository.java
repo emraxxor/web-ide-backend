@@ -39,13 +39,13 @@ import hu.emraxxor.web.ide.entities.User;
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
 
-    public Optional<User> findByNeptunId(String neptunId);
+    Optional<User> findByNeptunId(String neptunId);
     
-    public Optional<User> findByUserMail(String mail);
+    Optional<User> findByUserMail(String mail);
     
-    public Optional<User> findByNeptunIdIgnoreCase(String neptunId);
+    Optional<User> findByNeptunIdIgnoreCase(String neptunId);
 
-    public Page<User> findAll(Pageable pageable);
+    Page<User> findAll(Pageable pageable);
     
     List<User> removeByUserId(Long uid);
 }

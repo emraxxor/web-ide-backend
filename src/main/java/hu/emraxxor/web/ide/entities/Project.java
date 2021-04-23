@@ -1,17 +1,12 @@
 package hu.emraxxor.web.ide.entities;
 
-import java.time.LocalDateTime;
-
-import javax.persistence.*;
-
+import lombok.*;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import hu.emraxxor.web.ide.data.type.docker.DockerContainerImage;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
 
 /**
@@ -20,9 +15,11 @@ import lombok.NoArgsConstructor;
  *
  */
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 @Table(
         name = "projects" ,
@@ -48,7 +45,7 @@ public class Project {
     @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private Container container;
    
-    @OneToOne
+    @ManyToOne
     @JoinColumn( name = "user_id")
     private User user;
     
@@ -57,4 +54,18 @@ public class Project {
 	
 	@CreationTimestamp
 	private LocalDateTime createdOn;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Project project = (Project) o;
+
+        return id != null && id.equals(project.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return 1545761250;
+    }
 }

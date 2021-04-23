@@ -68,20 +68,14 @@ public class DockerContainerController {
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<CreateContainerResponse> update(@Valid @RequestBody DockerContainerCommand cmd) {
 		var res = dockerContainerService.update(cmd);
-		if ( res.isPresent() ) {
-			return ResponseEntity.ok( res.get() );			
-		} 
-    	return ResponseEntity.notFound().build();
+		return res.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<CreateContainerResponse> create(@Valid @RequestBody DockerContainerCommand cmd) {
 		var res = dockerContainerService.create(cmd);
-		if ( res.isPresent() ) {
-			return ResponseEntity.ok( res.get() );			
-		} 
-    	return ResponseEntity.notFound().build();
+		return res.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
 	@GetMapping("/created")
@@ -90,7 +84,7 @@ public class DockerContainerController {
 						.ok( 
 								containerService.findContainers( userService.curr() )
 								.stream()
-								.map(e -> new ContainerFormElement(e))
+								.map(ContainerFormElement::new)
 								.collect(Collectors.toList()) 
 		);
 	}
@@ -101,7 +95,7 @@ public class DockerContainerController {
 						.ok( 
 								containerService.findContainers( userService.curr() )
 								.stream()
-								.map(e -> new ContainerFormElement(e))
+								.map(ContainerFormElement::new)
 								.collect(Collectors.toList()) 
 		);
 	}
@@ -129,9 +123,7 @@ public class DockerContainerController {
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<StatusResponse> exec(@Valid @RequestBody DockerContainerExecCommand cmd) {
 		Optional<Object> res = dockerContainerService.exec(cmd);
-		if ( res.isPresent() ) 
-			 return ResponseEntity.ok( StatusResponse.success( res.get() ) );
-    	return ResponseEntity.notFound().build();
+		return res.map(o -> ResponseEntity.ok(StatusResponse.success(o))).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
 	@GetMapping("/inspect")

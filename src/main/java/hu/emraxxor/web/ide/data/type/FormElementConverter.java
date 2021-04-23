@@ -8,9 +8,9 @@ package hu.emraxxor.web.ide.data.type;
  */
 public interface FormElementConverter<T> {
 
-	public T convert(String e);
+	T convert(String e);
 	
-	public String convert(Object e);
+	String convert(Object e);
 
 
 }

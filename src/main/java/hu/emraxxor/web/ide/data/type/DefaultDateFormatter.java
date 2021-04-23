@@ -1,14 +1,13 @@
 package hu.emraxxor.web.ide.data.type;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
-
-import lombok.extern.log4j.Log4j;
-import lombok.extern.log4j.Log4j2;
+import java.util.Objects;
 
 /**
  * Helper class for managing dates.
@@ -22,16 +21,16 @@ public class DefaultDateFormatter {
 
 
 
-	public static enum DATE_FORMAT {
+	public enum DATE_FORMAT {
 		STRICT_DATE_FORMAT("yyyy-MM-dd'T'HH:mm:ss.SSS"),
 		STRICT_DATE_TIME("yyyy-MM-dd HH:mm:ss"),
 		YEAR_MONTH("yyyy-MM"),
 		YEAR_MONTH_DAY("yyyy-MM-dd")
 		;
 		
-		private String value;
+		private final String value;
 		
-		private DATE_FORMAT(String val) {
+		DATE_FORMAT(String val) {
 			this.value = val;
 		}
 		
@@ -47,7 +46,7 @@ public class DefaultDateFormatter {
 	}
 	
 	public static Timestamp timestamp(String date, DATE_FORMAT df) {
-		return new Timestamp(  parse(date, df).getTime() );
+		return new Timestamp(  Objects.requireNonNull(parse(date, df)).getTime() );
 	}
 
 	

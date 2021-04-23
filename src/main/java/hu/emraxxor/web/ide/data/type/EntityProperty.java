@@ -18,7 +18,6 @@ public @interface EntityProperty {
 	
 	/**
 	 * Name of the property that is going to be converted
-	 * @return
 	 */
 	String property();
 	

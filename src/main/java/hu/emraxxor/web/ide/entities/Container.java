@@ -1,31 +1,14 @@
 package hu.emraxxor.web.ide.entities;
 
-import java.time.LocalDateTime;
-
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-
+import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
+import hu.emraxxor.web.ide.data.type.docker.DockerContainerImage;
+import lombok.*;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import hu.emraxxor.web.ide.data.type.IgnoreField;
-import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
-import hu.emraxxor.web.ide.data.type.docker.DockerContainerImage;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import javax.persistence.*;
+import java.time.LocalDateTime;
 
 
 /**
@@ -34,8 +17,10 @@ import lombok.NoArgsConstructor;
  *
  */
 @Entity
-@Data
-@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @AllArgsConstructor
 @Table(
         name = "containers" ,
@@ -87,6 +72,19 @@ public class Container {
 	
 	@CreationTimestamp
 	private LocalDateTime createdOn;
-	
-	
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Container container = (Container) o;
+
+        return id != null && id.equals(container.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return 477728388;
+    }
 }

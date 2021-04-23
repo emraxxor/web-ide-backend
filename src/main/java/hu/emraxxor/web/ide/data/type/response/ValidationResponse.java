@@ -7,7 +7,6 @@ import java.util.List;
 /**
  * 
  * @author Attila Barna
- * @category infovip.web.response
  */
 public class ValidationResponse  extends StatusResponse {
 

@@ -1,5 +1,8 @@
 package hu.emraxxor.web.ide.config;
 
+import hu.emraxxor.web.ide.components.filter.JWTAuthenticationFilter;
+import hu.emraxxor.web.ide.components.filter.JWTAuthorizationFilter;
+import hu.emraxxor.web.ide.service.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -11,13 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-
-import hu.emraxxor.web.ide.components.filter.JWTAuthenticationFilter;
-import hu.emraxxor.web.ide.components.filter.JWTAuthorizationFilter;
-import hu.emraxxor.web.ide.service.ApplicationUserService;
 
 /**
  * 
@@ -32,9 +29,6 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 	private final PasswordEncoder pw;
 	
 	private final ApplicationUserService userService;
-	
-	@Autowired
-    private UserDetailsService userDetailsService;
 	
 	@Value("${jwt.secret}")
 	private String jwtSecret;
@@ -71,9 +65,9 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 		
 	}
 
-	
+
 	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+	protected void configure(AuthenticationManagerBuilder auth) {
 		auth.authenticationProvider(daoProvider());
 	}
 	

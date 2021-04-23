@@ -21,7 +21,7 @@ public enum DockerContainerImage {
 	ANGULAR("web-ide/angular")
 	;
 	
-	private String image;
+	private final String image;
 	
 	private final Boolean tty;
 	
@@ -64,8 +64,7 @@ public enum DockerContainerImage {
 	}
 	
 	public static Optional<DockerContainerImage> findByName(final String tname) {
-		return Arrays.asList( DockerContainerImage.values() )
-				.stream()
+		return Arrays.stream( DockerContainerImage.values() )
 				.filter( e -> e.name().equalsIgnoreCase( tname ))
 				.findAny();
 				

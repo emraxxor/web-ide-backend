@@ -1,12 +1,13 @@
 package hu.emraxxor.web.ide.data.type;
 
-import hu.emraxxor.web.ide.data.type.FormElement;
 import hu.emraxxor.web.ide.data.type.docker.ContainerStatus;
 import hu.emraxxor.web.ide.entities.Container;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

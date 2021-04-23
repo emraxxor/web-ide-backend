@@ -4,7 +4,6 @@ public interface CurrentWebUserSession<T> {
 
 	/**
 	 * Information about the current user
-	 * @return
 	 */
-	public CurrentUserInfo<T> current();
+	CurrentUserInfo<T> current();
 }

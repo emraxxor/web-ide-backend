@@ -15,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.Base64Utils;
 
@@ -38,13 +39,13 @@ import lombok.SneakyThrows;
  */
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter  {
 	
-		private AuthenticationManager authenticationManager;
+		private final AuthenticationManager authenticationManager;
 	    
 	    private static final String COOKIE_NAME = "token";
 
 	    private static final int EXPIRATION =  240 * 60 * 1000;
 	    
-	    private String secret;
+	    private final String secret;
 
 	    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, String secret) {
 	        this.authenticationManager = authenticationManager;
@@ -78,10 +79,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				
 				@Override
 				public boolean shouldSkipField(FieldAttributes field) {
-					 if (field.getDeclaringClass() == UserFormElement.class && field.getName().equals("userPassword")) 
-		                    return true;
-		             
-					 return false;
+					return field.getDeclaringClass() == UserFormElement.class && field.getName().equals("userPassword");
 				}
 				
 				@Override
@@ -102,7 +100,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	        		.withClaim("roles", ((ApplicationUser)auth.getPrincipal()).
 	        				getGrantedAuthorities()
 	        				.stream()
-	        				.map(e -> e.getAuthority() ).collect(Collectors.toList()) 
+	        				.map(GrantedAuthority::getAuthority).collect(Collectors.toList())
 	        		 )
 	        		.withClaim("user", Base64Utils.encodeToString( 
 	        								gson.toJson( mapper.map( user.getUser() , UserFormElement.class )).getBytes()  

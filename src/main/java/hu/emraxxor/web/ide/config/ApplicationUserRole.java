@@ -18,22 +18,22 @@ import com.google.common.collect.Sets;
  */
 public enum ApplicationUserRole {
 
-	USER(Sets.newHashSet(USER_READ, USER_WRITE, USER_CREATE, USER_DELETE, DOCKER_CONTAINER_PERMISSON)),
+	USER(Sets.newHashSet(USER_READ, USER_WRITE, USER_CREATE, USER_DELETE, DOCKER_CONTAINER_PERMISSION)),
 	
 	ADMIN(Sets.newHashSet(
 				ADMIN_READ, ADMIN_WRITE, ADMIN_CREATE, ADMIN_DELETE, 
 				USER_READ, USER_WRITE, USER_CREATE, USER_DELETE,
-				DOCKER_EXEC_PERMISSION,DOCKER_CONTAINER_PERMISSON,
+				DOCKER_EXEC_PERMISSION, DOCKER_CONTAINER_PERMISSION,
 				DOCKER_ADMIN_PERMISSION
 	)),
 
-	DOCKER_MANAGER(Sets.newHashSet(DOCKER_EXEC_PERMISSION,DOCKER_CONTAINER_PERMISSON))
+	DOCKER_MANAGER(Sets.newHashSet(DOCKER_EXEC_PERMISSION, DOCKER_CONTAINER_PERMISSION))
 	
 	;
 	
 	private final Set<ApplicationPermission> permissions;
 	
-	private ApplicationUserRole(Set<ApplicationPermission> p) {
+	ApplicationUserRole(Set<ApplicationPermission> p) {
 		this.permissions = p;
 	}
 	

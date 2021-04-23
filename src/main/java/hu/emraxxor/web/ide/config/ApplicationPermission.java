@@ -17,7 +17,7 @@ public enum ApplicationPermission {
 	ADMIN_WRITE("admin:write"),
 	ADMIN_DELETE("admin:delete"),
 
-	DOCKER_CONTAINER_PERMISSON("docker:container"),
+	DOCKER_CONTAINER_PERMISSION("docker:container"),
 	DOCKER_ADMIN_PERMISSION("docker:admin"),
 	DOCKER_EXEC_PERMISSION("docker:exec"),
 	

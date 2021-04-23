@@ -1,24 +1,22 @@
 package hu.emraxxor.web.ide.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import javax.annotation.PostConstruct;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Base64Utils;
-
 import hu.emraxxor.web.ide.config.ProfileProperties;
 import hu.emraxxor.web.ide.data.type.DefaultFileInfo;
 import hu.emraxxor.web.ide.data.type.FileInfo;
 import hu.emraxxor.web.ide.data.type.ImageData;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Synchronized;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
+
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * 
@@ -27,11 +25,11 @@ import lombok.extern.log4j.Log4j2;
  */
 @Service
 @Log4j2
+@AllArgsConstructor
 public class ProfileStorageService {
 
 	
-	@Autowired
-	private ProfileProperties fp;
+	private final ProfileProperties fp;
 	
 	@PostConstruct
 	@SneakyThrows

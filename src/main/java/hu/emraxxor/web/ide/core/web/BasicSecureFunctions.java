@@ -15,11 +15,6 @@ public class BasicSecureFunctions {
      * Check if the given string contains a pattern which could be lead to a
      * possible attack . This function only checks the existence of the given pattern.
      *
-     * @param arg
-     *
-     * @url https://www.owasp.org/index.php/Path_Traversal
-     *
-     * @return
      */
     public static boolean directoryTraversalInputCheck(String arg) {
         return !(arg.contains("%2e") || arg.contains("%5c") || arg.contains("%25")
@@ -32,9 +27,9 @@ public class BasicSecureFunctions {
     }
     
     public static boolean directoryTraversalInputCheckStartsWith(String arg) {
-    	return Arrays.asList(arg.split("/")).stream().anyMatch(e -> startsWith(e))
+    	return Arrays.stream(arg.split("/")).anyMatch(BasicSecureFunctions::startsWith)
     			||
-    			Arrays.asList(arg.split("\\\\")).stream().anyMatch(e -> startsWith(e)) ;
+    			Arrays.stream(arg.split("\\\\")).anyMatch(BasicSecureFunctions::startsWith) ;
     }
 
     public static String decode(String value) throws UnsupportedEncodingException {

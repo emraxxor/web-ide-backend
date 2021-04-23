@@ -96,9 +96,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			appdir.append(String.format("/%s", decode(file) ));
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File(cleaned);
 
 			if ( ffile.exists() ) {
@@ -119,9 +117,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			appdir.append(String.format("/%s", decode(file) ));
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File(cleaned);
 			
 			FileUtils.writeByteArrayToFile(ffile , ((String)data.get("data")).getBytes() );
@@ -143,8 +139,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var oldfile = new File(cleaned + '/' + decode(file) );
 			var newfile = new File(cleaned + '/' + decode(projectFile.getName()) );
 			
@@ -177,8 +172,7 @@ public class ProjectFileManagerController {
 			&& projectFile.getType() == ProjectFileType.DIR
 		) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var currdir = new File( cleaned + '/' + decode(directory) + '/' + decode(projectFile.getName()) );
 
 			if ( !currdir.exists() )
@@ -211,8 +205,7 @@ public class ProjectFileManagerController {
 				&& projectFile.getType() == ProjectFileType.DIR
 		) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var newdir =  new File(cleaned + '/' +  decode( ( projectFile.getName() ) ) );
 			var currdir = new File(cleaned + '/' +  decode( directory ) );
 
@@ -247,8 +240,7 @@ public class ProjectFileManagerController {
 				&& data.length > 1
 		) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var currdir = new File(cleaned + '/' + decode( directory ) );
 
 			if ( currdir.exists() )
@@ -268,9 +260,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
-			appdir.append(String.format("/%s", decode(file ) ));
-			var cleaned = appdir.toString().replace("//","/");
+			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File( cleaned );
 			
 			if ( ffile.exists() ) {

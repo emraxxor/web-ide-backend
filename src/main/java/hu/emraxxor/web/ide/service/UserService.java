@@ -11,6 +11,8 @@ import hu.emraxxor.web.ide.entities.User;
 import hu.emraxxor.web.ide.repositories.UserRepository;
 import lombok.AllArgsConstructor;
 
+import javax.annotation.CheckForNull;
+
 /**
  * 
  * @author Attila Barna
@@ -43,9 +45,13 @@ public class UserService {
 		var curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		return findById(curr.getUserId());
 	}
-	
+
+	@CheckForNull
 	public User curr() {
-		return current().get();
+		if ( current().isPresent() ) {
+			return current().get();
+		}
+		return null;
 	}
 
 }

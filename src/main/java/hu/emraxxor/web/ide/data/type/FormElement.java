@@ -14,7 +14,6 @@ import lombok.extern.log4j.Log4j2;
 /**
  * 
  * @author Attila Barna
- * @category infovip.form
  *
  * @param <T>
  */
@@ -35,8 +34,8 @@ public class FormElement<T> implements FormData {
 				if ( f.getAnnotation(IgnoreField.class)  != null ) continue;
 				
 				if ( (fm=f.getAnnotation(FormMapper.class)) != null ) {
-					Method targetMethod = null;
-					Method fromMethod = null;
+					Method targetMethod;
+					Method fromMethod;
 					Class<?> fromType = fm.sourceType().equals(Null.class) ? f.getType() : fm.sourceType() ;
 					Class<?> targetType = fm.targetType().equals(Null.class) ? f.getType() : fm.targetType() ;
 					
@@ -62,15 +61,13 @@ public class FormElement<T> implements FormData {
 								value = ((FormElementConverter<?>) converter).convert( value );
 							}
 						}
-					} 
-					
-					if ( fm.expression().equals("") ) {
-							targetMethod.invoke( to ,  value );
-					} else {
-							value = Class.forName(fm.expression()).getDeclaredConstructor().newInstance();
-							targetMethod.invoke(to , value);
 					}
-					
+
+					if (!fm.expression().equals("")) {
+						value = Class.forName(fm.expression()).getDeclaredConstructor().newInstance();
+					}
+					targetMethod.invoke( to ,  value );
+
 				}
 			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
@@ -181,7 +178,7 @@ public class FormElement<T> implements FormData {
 
 	
 	public T toDataElement(Class<T> clazz,Field[] fields) {
-		Constructor<?> cons = null;
+		Constructor<?> cons;
 		T object = null;
 		try {
 			cons = clazz.getConstructor();
@@ -234,7 +231,7 @@ public class FormElement<T> implements FormData {
 		Field[] fields = to.getDeclaredFields();
 
 		try {
-			object = (Z) to.getConstructor().newInstance();
+			object = to.getConstructor().newInstance();
 			
 			for(Field f : fields ) {
 				// skip field
@@ -242,7 +239,7 @@ public class FormElement<T> implements FormData {
 				
 				// convert timestamp to string
 				if ( f.getAnnotation(TimestampToString.class) != null ) {
-					Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
+					Method s = to.getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
 					
 					s.invoke(object, 
 							DefaultDateFormatter.format(  
@@ -277,27 +274,8 @@ public class FormElement<T> implements FormData {
 		Field[] fields = to.getClass().getDeclaredFields();
 		try {
 			for(Field f : fields ) {
-				if ( f.getAnnotation(IgnoreField.class)  != null ) continue;
-				
-				if ( f.getAnnotation(TimestampToString.class) != null ) {
-					Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
-					
-					s.invoke(to, 
-							DefaultDateFormatter.format(  
-								(Timestamp) from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) ,
-								f.getAnnotation(TimestampToString.class).type()
-							)
-					);
-					
-					continue;
-				}
+				if (updateField(from, to, f)) continue;
 
-				if ( f.getAnnotation(EntityProperty.class) != null ) 
-					continue;
-
-				Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
-				s.invoke(to, from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) );
-				
 				// try to convert with using formmapper
 				mapper(from, to, fields);
 
@@ -307,30 +285,35 @@ public class FormElement<T> implements FormData {
 		}	
 	}
 
+	private static <Y, Z> boolean updateField(Y from, Z to, Field f) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+		if ( f.getAnnotation(IgnoreField.class)  != null ) return true;
+
+		if ( f.getAnnotation(TimestampToString.class) != null ) {
+			Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
+
+			s.invoke(to,
+					DefaultDateFormatter.format(
+						(Timestamp) from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) ,
+						f.getAnnotation(TimestampToString.class).type()
+					)
+			);
+
+			return true;
+		}
+
+		if ( f.getAnnotation(EntityProperty.class) != null )
+			return true;
+
+		Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
+		s.invoke(to, from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) );
+		return false;
+	}
+
 	public static <Y,Z>  void updateFrom(Y from, Z to) {
 		Field[] fields = from.getClass().getDeclaredFields();
 		try {
 			for(Field f : fields ) {
-				if ( f.getAnnotation(IgnoreField.class)  != null ) continue;
-
-				if ( f.getAnnotation(TimestampToString.class) != null ) {
-					Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
-
-					s.invoke(to,
-							DefaultDateFormatter.format(
-									(Timestamp) from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) ,
-									f.getAnnotation(TimestampToString.class).type()
-							)
-					);
-
-					continue;
-				}
-
-				if ( f.getAnnotation(EntityProperty.class) != null )
-					continue;
-
-				Method s = to.getClass().getMethod("set" + StringUtils.capitalize(f.getName()) , f.getType());
-				s.invoke(to, from.getClass().getMethod("get" + StringUtils.capitalize(f.getName())).invoke(from) );
+				updateField(from, to, f);
 			}
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			log.error(e);

@@ -11,6 +11,6 @@ import org.springframework.data.repository.CrudRepository;
  */
 public interface BasicService<T,R extends CrudRepository<T, ?>> {
 
-	public R repository();
+	R repository();
 	
 }

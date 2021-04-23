@@ -10,11 +10,11 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class CurrentUser<T extends UserFormElement> implements CurrentUserInfo<T> {
 
-	private Boolean isAuthenticated;
+	private final Boolean isAuthenticated;
 
-	private DefaultApplicationRole role;
+	private final DefaultApplicationRole role;
 	
-	private T user;
+	private final T user;
 	
 	public Boolean isAuthenticated() {
 		return isAuthenticated;

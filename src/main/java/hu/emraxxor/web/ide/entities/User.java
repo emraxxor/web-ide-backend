@@ -5,41 +5,19 @@
  */
 package hu.emraxxor.web.ide.entities;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.google.common.collect.Lists;
+import hu.emraxxor.web.ide.config.ApplicationUserRole;
+import hu.emraxxor.web.ide.data.type.IgnoreField;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.NamedQueries;
-import javax.persistence.OneToMany;
-import javax.persistence.PrePersist;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.hibernate.annotations.CreationTimestamp;
-
-import com.google.common.collect.Lists;
-
-import hu.emraxxor.web.ide.config.ApplicationUserRole;
-import hu.emraxxor.web.ide.data.type.IgnoreField;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  *
@@ -104,7 +82,7 @@ public class User implements Serializable {
 
     private String city;
 
-    private Number zip;
+    private Integer zip;
     
     @IgnoreField
     private String image;
@@ -126,7 +104,7 @@ public class User implements Serializable {
     private ApplicationUserRole role;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Project> projects = Lists.newArrayList();
+    private final List<Project> projects = Lists.newArrayList();
     
     @PrePersist
     public void prePersist() {

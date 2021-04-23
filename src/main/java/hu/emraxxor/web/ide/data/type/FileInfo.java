@@ -2,7 +2,7 @@ package hu.emraxxor.web.ide.data.type;
 
 public interface FileInfo {
 
-	public String name();
+	String name();
 	
-	public Long lastModified();
+	Long lastModified();
 }

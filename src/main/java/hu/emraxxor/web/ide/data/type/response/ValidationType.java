@@ -3,7 +3,6 @@ package hu.emraxxor.web.ide.data.type.response;
 /**
  * 
  * @author Attila Barna
- * @category infovip.web.validation
  *
  */
 public enum ValidationType {
@@ -32,11 +31,11 @@ public enum ValidationType {
 	
 	INVALID_CAPTCHA("INVALID_CAPTCHA", ResponseStatusType.ERROR);
 	
-	private String value;
+	private final String value;
 	
-	private ResponseStatusType code;
+	private final ResponseStatusType code;
 	
-	private ValidationType(String v,ResponseStatusType code) {
+	ValidationType(String v, ResponseStatusType code) {
 		this.value = v;
 		this.code = code;
 	}

@@ -2,9 +2,9 @@ package hu.emraxxor.web.ide.core.web;
 
 public interface CurrentUserInfo<T> {
 
-	public Boolean isAuthenticated();
+	Boolean isAuthenticated();
 	
-	public DefaultApplicationRole getRole();
+	DefaultApplicationRole getRole();
 	
-	public T getUser();
+	T getUser();
 }

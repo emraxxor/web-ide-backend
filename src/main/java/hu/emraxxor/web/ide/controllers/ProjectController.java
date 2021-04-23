@@ -1,22 +1,7 @@
 package hu.emraxxor.web.ide.controllers;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import hu.emraxxor.web.ide.data.type.ProjectFormDeleteElement;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import hu.emraxxor.web.ide.data.type.ProjectFormElement;
-import hu.emraxxor.web.ide.data.type.docker.DockerContainerElement;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerInspectResponse;
 import hu.emraxxor.web.ide.data.type.response.StatusResponse;
 import hu.emraxxor.web.ide.service.DockerContainerService;
@@ -27,6 +12,16 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -71,14 +66,22 @@ public class ProjectController {
 		return ResponseEntity.ok( StatusResponse.success( projectService.delete(new ProjectFormDeleteElement(id))  ));
 	}
 
+	@ApiOperation(value = "Removes the given project")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project is deleted successfully" ),
+	})
+	@DeleteMapping("/admin/{id}")
+	@PreAuthorize("hasAuthority('docker:container') and hasRole('ROLE_ADMIN')")
+	public ResponseEntity<StatusResponse> deleteByAdmin(@PathVariable Long id) {
+		return ResponseEntity.ok( StatusResponse.success( projectService.deleteByAdmin(new ProjectFormDeleteElement(id))  ));
+	}
+
+
 	@GetMapping("/inspect/{id}")
 	@PreAuthorize("hasAuthority('docker:container')")
 	public ResponseEntity<StatusResponse> inspect(@ApiParam(value = "Id of the project", required = true) @PathVariable Long id) {
 		var project = projectService.findByUserAndProjectId(userService.curr(), id);
-		if ( project.isPresent() ) {
-			return ResponseEntity.ok(StatusResponse.success( mapper.map( dockerContainerService.inspect(project.get()) , DockerContainerInspectResponse.class) ) );
-		}
-    	return ResponseEntity.notFound().build();
+		return project.map(value -> ResponseEntity.ok(StatusResponse.success(mapper.map(dockerContainerService.inspect(value), DockerContainerInspectResponse.class)))).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 	
 	@GetMapping("/container/{id}")
@@ -102,10 +105,7 @@ public class ProjectController {
 				@ApiParam(value = "Id of the project", required = true) @PathVariable Long id
 		) {
 		var project = projectService.findByUserAndProjectId(userService.curr(), id);
-		if ( project.isPresent() ) {
-			return ResponseEntity.ok(StatusResponse.success( dockerContainerService.log(project.get()) ));
-		}
-    	return ResponseEntity.notFound().build();
+		return project.map(value -> ResponseEntity.ok(StatusResponse.success(dockerContainerService.log(value)))).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PostMapping("/start/{id}")
@@ -196,28 +196,23 @@ public class ProjectController {
 	public ResponseEntity<StatusResponse> projectById(@PathVariable Long id) {
 		var user = userService.curr();
 		var project = projectService.findByUserAndProjectId(user, id);
-		
-		if ( project.isPresent() ) 
-			return ResponseEntity.ok(StatusResponse.success(new ProjectFormElement(project.get())));
-		
-		return ResponseEntity.notFound().build();
+		return project.map(value -> ResponseEntity.ok(StatusResponse.success(new ProjectFormElement(value)))).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@GetMapping("/simple")
 	public ResponseEntity<StatusResponse> projectWithoutContainers() {
-		var curr = userService.curr();
-
 		return ResponseEntity.ok(StatusResponse
 				.success(
 						projectService
 								.projects(userService.curr())
 								.stream()
-								.map(e -> new ProjectFormElement(e) )
+								.map(ProjectFormElement::new)
 								.collect(Collectors.toList())
 				));
 	}
 
 	@GetMapping
+	@PreAuthorize("hasAuthority('docker:container') and hasAuthority('docker:admin')")
 	public ResponseEntity<StatusResponse> projects() {
 		var containers = dockerContainerService.containers();
 		var curr = userService.curr();
@@ -233,15 +228,12 @@ public class ProjectController {
 														var container =  containers
 																.stream()
 																.filter( x ->  
-																	Arrays.asList(x.getNames())
-																	.stream()
-																	.anyMatch(xe -> xe.equals( "/"+curr.getNeptunId()+"-"+ e.getIdentifier() ) )
+																	Arrays.stream(x.getNames())
+																	.anyMatch(xe -> xe.equals( "/"+ Objects.requireNonNull(curr).getNeptunId()+"-"+ e.getIdentifier() ) )
 																 )
 																.findAny();
-														
-														if ( container.isPresent() ) {
-															element.setContainer(container.get());
-														}
+
+														container.ifPresent(element::setContainer);
 														
 														return element;
 													})

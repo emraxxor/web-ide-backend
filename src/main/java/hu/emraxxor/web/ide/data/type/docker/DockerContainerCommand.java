@@ -1,11 +1,10 @@
 package hu.emraxxor.web.ide.data.type.docker;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotNull;
 
 /**
  * 
@@ -22,7 +21,7 @@ public class DockerContainerCommand {
 	private Long projectId;
 
 	@NotNull
-	@ApiModelProperty(notes = "Image type", name = "image", required = true, allowEmptyValue = false)
+	@ApiModelProperty(notes = "Image type", name = "image", required = true)
 	private DockerContainerImage image;
 
 	@NotNull

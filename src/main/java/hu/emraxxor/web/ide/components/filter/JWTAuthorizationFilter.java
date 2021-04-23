@@ -37,7 +37,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final String COOKIE_NAME = "token";
     
-    private String secret;
+    private final String secret;
     
     private Cookie cookie;
     
@@ -53,9 +53,9 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                                     FilterChain chain) throws IOException, ServletException {
     	
         var storedToken = getTokenFromCookie(req);
-        if (!storedToken.isPresent()) {
+        if (storedToken.isEmpty()) {
             storedToken = getTokenFromHeader(req);
-            if (!storedToken.isPresent()) {
+            if (storedToken.isEmpty()) {
                 chain.doFilter(req, res);
                 return;
             }
@@ -104,12 +104,12 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         				.filter(c -> c.getName().equals(COOKIE_NAME))
         				.findAny();
         
-        if (!cookie.isPresent()) 
+        if (cookie.isEmpty())
             return Optional.empty();
         
         this.cookie = cookie.get();
         
-        return !cookie.isPresent() ? Optional.empty() : Optional.of(cookie.get().getValue());
+        return cookie.map(Cookie::getValue);
 
     }
    

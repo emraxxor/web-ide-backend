@@ -39,7 +39,7 @@ public class PublicUsersController {
 	
 	@PostMapping
 	public ResponseEntity<?> registration(@Valid @RequestBody UserFormElement user) {
-		if ( !userService.findUserByEmail(user.getUserMail()).isPresent() && !userService.findUserByNeptunId(user.getNeptunId()).isPresent() ) {
+		if ( userService.findUserByEmail(user.getUserMail()).isEmpty() && userService.findUserByNeptunId(user.getNeptunId()).isEmpty()) {
 			User u = mapper.map(user, User.class);
 			u.setUserPassword(encoder.encode(user.getUserPassword()));
 			userService.save(u);
