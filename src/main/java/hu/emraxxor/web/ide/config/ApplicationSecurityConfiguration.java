@@ -62,7 +62,6 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
             .addFilter(new JWTAuthenticationFilter(authenticationManager(), jwtSecret))
             .addFilter(new JWTAuthorizationFilter(authenticationManager(), jwtSecret))
 		 	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		
 	}
 
 
