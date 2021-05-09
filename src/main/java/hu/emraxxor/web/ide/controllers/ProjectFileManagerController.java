@@ -1,34 +1,5 @@
 package hu.emraxxor.web.ide.controllers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.net.URLCodec;
-import org.apache.commons.compress.utils.Lists;
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import hu.emraxxor.web.ide.config.UserProperties;
 import hu.emraxxor.web.ide.core.web.BasicSecureFunctions;
 import hu.emraxxor.web.ide.data.type.project.ProjectFile;
@@ -38,6 +9,24 @@ import hu.emraxxor.web.ide.service.ProjectService;
 import hu.emraxxor.web.ide.service.UserService;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.io.FileUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static hu.emraxxor.web.ide.core.web.BasicSecureFunctions.decode;
 
@@ -46,14 +35,17 @@ import static hu.emraxxor.web.ide.core.web.BasicSecureFunctions.decode;
 @Log4j2
 public class ProjectFileManagerController {
 
-	@Autowired
-	private ProjectService projectService;
+	private final ProjectService projectService;
 
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 	
-	@Autowired
-	private UserProperties userprops;
+	private final UserProperties userprops;
+
+	public ProjectFileManagerController(ProjectService projectService, UserService userService, UserProperties userprops) {
+		this.projectService = projectService;
+		this.userService = userService;
+		this.userprops = userprops;
+	}
 
 	@PutMapping
 	@SneakyThrows
@@ -66,7 +58,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
+			var appdir = new StringBuilder( userdir + "/" + Objects.requireNonNull(user).getNeptunId() +  "/projects/" + project.get().getIdentifier() );
 			var data = Base64.decodeBase64(file.getData());
 			
 			if ( dir.isPresent() ) 
@@ -96,7 +88,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File(cleaned);
 
 			if ( ffile.exists() ) {
@@ -117,7 +109,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File(cleaned);
 			
 			FileUtils.writeByteArrayToFile(ffile , ((String)data.get("data")).getBytes() );
@@ -139,7 +131,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var oldfile = new File(cleaned + '/' + decode(file) );
 			var newfile = new File(cleaned + '/' + decode(projectFile.getName()) );
 			
@@ -172,7 +164,7 @@ public class ProjectFileManagerController {
 			&& projectFile.getType() == ProjectFileType.DIR
 		) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var currdir = new File( cleaned + '/' + decode(directory) + '/' + decode(projectFile.getName()) );
 
 			if ( !currdir.exists() )
@@ -205,7 +197,7 @@ public class ProjectFileManagerController {
 				&& projectFile.getType() == ProjectFileType.DIR
 		) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var newdir =  new File(cleaned + '/' +  decode( ( projectFile.getName() ) ) );
 			var currdir = new File(cleaned + '/' +  decode( directory ) );
 
@@ -240,7 +232,7 @@ public class ProjectFileManagerController {
 				&& data.length > 1
 		) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier()).replace("//","/");
 			var currdir = new File(cleaned + '/' + decode( directory ) );
 
 			if ( currdir.exists() )
@@ -260,7 +252,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() && !BasicSecureFunctions.directoryTraversalInputCheckStartsWith(file) ) {
 			var userdir = userprops.getStorage();
-			var cleaned = (userdir + "/" + user.getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
+			var cleaned = (userdir + "/" + Objects.requireNonNull(user).getNeptunId() + "/projects/" + project.get().getIdentifier() + String.format("/%s", decode(file))).replace("//","/");
 			var ffile = new File( cleaned );
 			
 			if ( ffile.exists() ) {
@@ -289,7 +281,7 @@ public class ProjectFileManagerController {
 		var project = projectService.findByUserAndProjectId(user, projectId);
 		if ( project.isPresent() ) {
 			var userdir = userprops.getStorage();
-			var appdir = new StringBuilder( userdir + "/" + user.getNeptunId() +  "/projects/" + project.get().getIdentifier() );
+			var appdir = new StringBuilder( userdir + "/" + Objects.requireNonNull(user).getNeptunId() +  "/projects/" + project.get().getIdentifier() );
 			var files = Lists.newArrayList();
 			
 			if ( dir.isPresent() ) { 

@@ -2,6 +2,8 @@ package hu.emraxxor.web.ide.service;
 
 import java.util.Optional;
 
+import hu.emraxxor.web.ide.entities.UserLog;
+import hu.emraxxor.web.ide.repositories.UserLogRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,9 @@ import javax.annotation.CheckForNull;
 @AllArgsConstructor
 public class UserService {
 
-	private UserRepository repository;
+	private final UserRepository repository;
+
+	private final UserLogRepository userLogRepository;
 	
 	public Optional<User> findUserByNeptunId(String neptunId) {
 		return repository.findByNeptunId(neptunId);
@@ -35,6 +39,10 @@ public class UserService {
 	
 	public User save(User u) {
 		return repository.save(u);
+	}
+
+	public UserLog save(UserLog u) {
+		return userLogRepository.save(u);
 	}
 	
 	public Optional<User> findById(Long id) {

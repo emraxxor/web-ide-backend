@@ -63,7 +63,6 @@ class ProjectFileManagerControllerTest {
 	
 	MockMvc mockMvc;
 	
-	
 	ProjectRepository validRepository;
 	
 	User validUser;

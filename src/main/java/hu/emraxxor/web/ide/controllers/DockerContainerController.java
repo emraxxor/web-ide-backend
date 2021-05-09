@@ -1,25 +1,7 @@
 package hu.emraxxor.web.ide.controllers;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.validation.Valid;
-
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
-
 import hu.emraxxor.web.ide.data.type.ContainerFormElement;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerCommand;
 import hu.emraxxor.web.ide.data.type.docker.DockerContainerElement;
@@ -29,6 +11,16 @@ import hu.emraxxor.web.ide.data.type.response.StatusResponse;
 import hu.emraxxor.web.ide.service.ContainerService;
 import hu.emraxxor.web.ide.service.DockerContainerService;
 import hu.emraxxor.web.ide.service.UserService;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -37,19 +29,16 @@ import hu.emraxxor.web.ide.service.UserService;
  */
 @RestController
 @RequestMapping("/api/docker/container")
+@AllArgsConstructor
 public class DockerContainerController {
 
-	@Autowired
-	private DockerContainerService dockerContainerService;
+	private final DockerContainerService dockerContainerService;
 	
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 	
-	@Autowired
-	private ContainerService containerService;
+	private final ContainerService containerService;
 	
-	@Autowired
-	private ModelMapper mapper;
+	private final ModelMapper mapper;
 	
 	@GetMapping
 	@PreAuthorize("hasAuthority('docker:container') and hasAuthority('docker:admin')")

@@ -105,7 +105,10 @@ public class User implements Serializable {
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private final List<Project> projects = Lists.newArrayList();
-    
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private final List<UserLog> logs = Lists.newArrayList();
+
     @PrePersist
     public void prePersist() {
         role = ApplicationUserRole.USER;
@@ -125,4 +128,5 @@ public class User implements Serializable {
     public void removeProject(Project p) {
     	this.projects.remove(p);
 	}
+
 }

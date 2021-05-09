@@ -12,8 +12,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,19 +32,16 @@ import java.util.stream.Collectors;
 @Api("ProjectController helps to manage projects")
 @RestController
 @RequestMapping("/api/project")
+@AllArgsConstructor
 public class ProjectController {
 
-	@Autowired
-	private ProjectService projectService;
+	private final ProjectService projectService;
 	
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 	
-	@Autowired
-	private DockerContainerService dockerContainerService;
+	private final DockerContainerService dockerContainerService;
 	
-	@Autowired
-	private ModelMapper mapper;
+	private final ModelMapper mapper;
 
 	@ApiOperation(value = "Creates a new project")
 	@ApiResponses(value = { 
@@ -204,7 +201,7 @@ public class ProjectController {
 		return ResponseEntity.ok(StatusResponse
 				.success(
 						projectService
-								.projects(userService.curr())
+								.projects(Objects.requireNonNull(userService.curr()))
 								.stream()
 								.map(ProjectFormElement::new)
 								.collect(Collectors.toList())
@@ -220,7 +217,7 @@ public class ProjectController {
 		return ResponseEntity.ok(StatusResponse
 									.success(  
 												projectService
-													.projects(userService.curr())
+													.projects(Objects.requireNonNull(userService.curr()))
 													.stream()
 													.map(e -> { 
 														var element = new ProjectFormElement(e);

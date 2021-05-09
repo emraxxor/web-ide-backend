@@ -3,6 +3,7 @@ package hu.emraxxor.web.ide.config;
 import hu.emraxxor.web.ide.components.filter.JWTAuthenticationFilter;
 import hu.emraxxor.web.ide.components.filter.JWTAuthorizationFilter;
 import hu.emraxxor.web.ide.service.ApplicationUserService;
+import hu.emraxxor.web.ide.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,14 +30,17 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 	private final PasswordEncoder pw;
 	
 	private final ApplicationUserService userService;
-	
+
+	private final UserService generalUserService;
+
 	@Value("${jwt.secret}")
 	private String jwtSecret;
 	
 	@Autowired
-	public ApplicationSecurityConfiguration(ApplicationUserService us, PasswordEncoder pe) {
+	public ApplicationSecurityConfiguration(ApplicationUserService us, PasswordEncoder pe, UserService generalUserService) {
 		userService = us;
 		pw = pe;
+		this.generalUserService = generalUserService;
 	}
 	
 	@Override
@@ -59,10 +63,9 @@ public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapt
 		 	.antMatchers("/users/**").permitAll()
 		 	.anyRequest().authenticated()
 		 	.and()
-            .addFilter(new JWTAuthenticationFilter(authenticationManager(), jwtSecret))
+            .addFilter(new JWTAuthenticationFilter(authenticationManager(), jwtSecret, generalUserService))
             .addFilter(new JWTAuthorizationFilter(authenticationManager(), jwtSecret))
 		 	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		
 	}
 
 

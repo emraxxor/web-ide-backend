@@ -10,6 +10,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import hu.emraxxor.web.ide.entities.UserLog;
+import hu.emraxxor.web.ide.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,12 +46,15 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	    private static final String COOKIE_NAME = "token";
 
 	    private static final int EXPIRATION =  240 * 60 * 1000;
+
+	    private final UserService userService;
 	    
 	    private final String secret;
 
-	    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, String secret) {
+	    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, String secret, UserService service) {
 	        this.authenticationManager = authenticationManager;
 	        this.secret = secret;
+	        this.userService = service;
 	        setFilterProcessesUrl("/authenticate"); 
 	    }
 
@@ -87,8 +92,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					return false;
 				}
 			};
-			
-			
+
+			var optionalUser = userService.findById(user.getUserId());
+			if ( optionalUser.isPresent() ) {
+				var userLog = UserLog.builder().user(optionalUser.get()).ip(req.getRemoteAddr()).build();
+				userService.save(userLog);
+			}
+
 			var gson = new GsonBuilder()
 					  .addSerializationExclusionStrategy(strategy)
 					  .create();

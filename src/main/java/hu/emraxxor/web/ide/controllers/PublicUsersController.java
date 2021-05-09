@@ -1,23 +1,17 @@
 package hu.emraxxor.web.ide.controllers;
 
-import javax.validation.Valid;
-
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-
 import hu.emraxxor.web.ide.data.type.UserFormElement;
 import hu.emraxxor.web.ide.data.type.response.StatusResponse;
 import hu.emraxxor.web.ide.entities.User;
 import hu.emraxxor.web.ide.service.UserService;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * 
@@ -25,17 +19,15 @@ import hu.emraxxor.web.ide.service.UserService;
  *
  */
 @RestController
+@AllArgsConstructor
 @RequestMapping("/users")
 public class PublicUsersController {
 
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 	
-	@Autowired
-	private ModelMapper mapper;
+	private final ModelMapper mapper;
 	
-	@Autowired
-	private PasswordEncoder encoder;
+	private final PasswordEncoder encoder;
 	
 	@PostMapping
 	public ResponseEntity<?> registration(@Valid @RequestBody UserFormElement user) {

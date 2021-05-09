@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import hu.emraxxor.web.ide.data.type.*;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,18 +29,20 @@ import javax.validation.Valid;
 @RequestMapping("/api/user")
 public class UsersController {
 
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
 	
-	@Autowired
-	private ProfileStorageService profileStorage;
+	private final ProfileStorageService profileStorage;
 	
-	@Autowired
-	private ModelMapper mapper;
+	private final ModelMapper mapper;
 
-	@Autowired
-	private PasswordEncoder encoder;
+	private final PasswordEncoder encoder;
 
+	public UsersController(UserService userService, ProfileStorageService profileStorage, ModelMapper mapper, PasswordEncoder encoder) {
+		this.userService = userService;
+		this.profileStorage = profileStorage;
+		this.mapper = mapper;
+		this.encoder = encoder;
+	}
 
 	@GetMapping("/info")
 	public UserFormElement info() {
