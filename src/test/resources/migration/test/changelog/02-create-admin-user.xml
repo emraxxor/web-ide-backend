@@ -1,0 +1,24 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet author="attila (generated)" id="1620489959638-1">
+        <insert tableName="users">
+            <column name="uid" valueNumeric="1"/>
+            <column name="address" value=""/>
+            <column name="city" value=""/>
+            <column name="created_on" valueDate="2021-05-08T17:43:48.594165"/>
+            <column name="first_name" value="admin"/>
+            <column name="image"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="last_name" value="admin"/>
+            <column name="last_seen"/>
+            <column name="neptun_id" value="admin"/>
+            <column name="role" value="ADMIN"/>
+            <column name="state" value=""/>
+            <column name="email" value="admin@mail.com"/>
+            <column name="password" value="$2a$10$4qe4Gzk3fmEGmg1HWm4NLuuIe55InfrsuaE5UoKpAbtjlerUSY9ae"/>
+            <column name="zip"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

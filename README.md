@@ -8,5 +8,4 @@ Web-IDE is an application suitable for online web development.
   - React
   - Spring
 
-#TODO ...
-
+Please check the official documentation for more information.
