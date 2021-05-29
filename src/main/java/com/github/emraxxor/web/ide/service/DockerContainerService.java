@@ -148,7 +148,11 @@ public class DockerContainerService {
 			var container = new DockerContainerElement(project.getContainer().getContainerId());
 			var inspectResponse = this.inspect(container);
 			if ( !Objects.equals(inspectResponse.getState().getStatus(), "created")) {
-				return authorizedCmd(container, (e, f) -> f.stopContainerCmd(e.getContainerId()).exec()).isEmpty();
+				try {
+					return authorizedCmd(container, (e, f) -> f.stopContainerCmd(e.getContainerId()).exec()).isEmpty();
+				} catch (Exception e) {
+					log.info(e.getMessage());
+				}
 			}
 			return true;
 		}

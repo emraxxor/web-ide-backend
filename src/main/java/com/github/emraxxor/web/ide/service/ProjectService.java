@@ -1,12 +1,15 @@
 package com.github.emraxxor.web.ide.service;
 
 import com.github.emraxxor.web.ide.config.UserProperties;
+import com.github.emraxxor.web.ide.data.type.ProjectFormDeleteElement;
+import com.github.emraxxor.web.ide.data.type.ProjectFormElement;
 import com.github.emraxxor.web.ide.entities.Project;
 import com.github.emraxxor.web.ide.entities.User;
 import com.github.emraxxor.web.ide.repositories.ProjectRepository;
-import com.github.emraxxor.web.ide.data.type.ProjectFormDeleteElement;
-import com.github.emraxxor.web.ide.data.type.ProjectFormElement;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -37,6 +40,9 @@ public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRe
 	@NonNull
 	private final UserProperties userprops;
 
+	// TEST CASE
+	private final ProjectRepository repository;
+
 	@Setter
 	private DockerContainerService dockerContainerService;
 
@@ -54,7 +60,7 @@ public class ProjectService extends BasicServiceAdapter<Project, Long, ProjectRe
 	}
 	
 	public List<Project> projects(User user) {
-		return this.projects(user.getUserId());
+		return projects(user.getUserId());
 	}
 	
 	public Optional<Project> findByUserAndProjectId(User user, Long id) {

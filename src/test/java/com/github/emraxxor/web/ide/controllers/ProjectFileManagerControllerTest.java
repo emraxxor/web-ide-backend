@@ -38,24 +38,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProjectFileManagerControllerTest {
 
 	@Mock
-    ProjectService projectService;
+	private ProjectService projectService;
 	
 	@Mock
-    UserService userService;
+	private UserService userService;
 	
 	@Mock
-    UserProperties userProperties;
+	private UserProperties userProperties;
 	
 	@InjectMocks
-	ProjectFileManagerController fileManagerController;
-	
-	MockMvc mockMvc;
-	
-	User validUser;
-	
-	Project validProject;
-	
-	String encodedText;
+	private ProjectFileManagerController fileManagerController;
+
+	private MockMvc mockMvc;
+
+	private User validUser;
+
+	private Project validProject;
+
+	private String encodedText;
 	
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {

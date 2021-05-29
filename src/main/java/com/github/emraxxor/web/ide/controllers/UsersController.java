@@ -1,23 +1,17 @@
 package com.github.emraxxor.web.ide.controllers;
 
-import java.io.IOException;
-
 import com.github.emraxxor.web.ide.data.type.*;
 import com.github.emraxxor.web.ide.data.type.response.StatusResponse;
 import com.github.emraxxor.web.ide.service.ProfileStorageService;
 import com.github.emraxxor.web.ide.service.UserService;
 import io.swagger.annotations.ApiOperation;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.IOException;
 
 
 /**
@@ -34,28 +28,24 @@ public class UsersController {
 	
 	private final ProfileStorageService profileStorage;
 	
-	private final ModelMapper mapper;
-
 	private final PasswordEncoder encoder;
 
-	public UsersController(UserService userService, ProfileStorageService profileStorage, ModelMapper mapper, PasswordEncoder encoder) {
+	public UsersController(UserService userService, ProfileStorageService profileStorage, PasswordEncoder encoder) {
 		this.userService = userService;
 		this.profileStorage = profileStorage;
-		this.mapper = mapper;
 		this.encoder = encoder;
 	}
 
 	@ApiOperation(value = "Information about the current user")
 	@GetMapping("/info")
 	public UserFormElement info() {
-		var curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		return FormElement.convertTo( userService.findById( curr.getUserId() ).get(), UserFormElement.class );
+		return FormElement.convertTo( userService.curr() , UserFormElement.class );
 	}
 
 	@ApiOperation(value = "Upload an image for the current user")
 	@PutMapping("/image")
 	public ResponseEntity<StatusResponse> image(@RequestBody ImageData data) {
-		if ( data.getData() != null ) {
+		if ( data.getData() != null && userService.current().isPresent() ) {
 			var curr = userService.current().get();
 			profileStorage.remove(curr.getImage());
 			FileInfo finfo = profileStorage.storeFile(data.getData());
@@ -70,10 +60,13 @@ public class UsersController {
 	@GetMapping("/image")
 	public ResponseEntity<StatusResponse> image() {
 		try {
-			var curr = userService.current().get();
-			return ResponseEntity.ok(StatusResponse.success(profileStorage.file(curr.getImage())));
+			if ( userService.current().isPresent() ) {
+				var curr = userService.current().get();
+				return ResponseEntity.ok(StatusResponse.success(profileStorage.file(curr.getImage())));
+			}
+		 	return ResponseEntity.notFound().build();
 		} catch (IOException e) {
-			 return ResponseEntity.notFound().build();
+			return ResponseEntity.notFound().build();
 		}
 	}
 
@@ -93,8 +86,8 @@ public class UsersController {
 	@ApiOperation(value = "Update user personal information")
 	@PutMapping("/personal")
 	public ResponseEntity<StatusResponse> update(@RequestBody UserProfilePersonalFormElement data) {
-		UserFormElement curr = (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		var u = userService.findById( curr.getUserId() );
+		var curr = userService.principal();
+		var u = userService.current();
 		if ( u.isPresent() ) {
 			var persistent = u.get();
 			if ( data.getUserMail() != null && data.getOldUserPassword() != null && encoder.matches(data.getOldUserPassword(), persistent.getUserPassword()) ) {

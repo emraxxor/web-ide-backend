@@ -2,14 +2,16 @@ package com.github.emraxxor.web.ide.data.type;
 
 import com.github.emraxxor.web.ide.entities.User;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class UserProfilePersonalFormElement extends FormElement<User>  {
 

@@ -37,22 +37,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ProjectControllerTest {
 
     @Mock
-    ProjectService projectService;
+    private ProjectService projectService;
 
     @Mock
-    UserService userService;
+    private UserService userService;
 
     @Mock
-    ModelMapper mapper;
+    private ModelMapper mapper;
 
     @InjectMocks
-    ProjectController projectController;
+    private ProjectController projectController;
 
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-    User validUser;
+    private User validUser;
 
-    Project validProject;
+    private Project validProject;
 
     @Mock
     DockerContainerService dockerContainerService;

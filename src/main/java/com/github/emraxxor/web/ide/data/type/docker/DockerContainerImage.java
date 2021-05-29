@@ -43,18 +43,15 @@ public enum DockerContainerImage {
 		this.attachStdin = attachStdin;
 		this.workdir = workdir;
 	}
-	
-	
+
 	public Boolean tty() {
 		return this.tty;
 	}
-	
-	
+
 	public Boolean attachStdin() {
 		return this.attachStdin;
 	}
-	
-	
+
 	public String image() {
 		return this.image;
 	}

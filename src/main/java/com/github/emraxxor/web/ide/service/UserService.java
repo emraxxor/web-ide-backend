@@ -54,6 +54,10 @@ public class UserService {
 		return findById(curr.getUserId());
 	}
 
+	public UserFormElement principal() {
+		return (UserFormElement)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+
 	@CheckForNull
 	public User curr() {
 		if ( current().isPresent() ) {

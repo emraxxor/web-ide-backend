@@ -1,15 +1,15 @@
 package com.github.emraxxor.web.ide.service;
 
-import java.util.List;
-import java.util.Optional;
-
-import javax.transaction.Transactional;
-
-import com.github.emraxxor.web.ide.repositories.ContainerRepository;
-import org.springframework.stereotype.Service;
-
 import com.github.emraxxor.web.ide.entities.Container;
 import com.github.emraxxor.web.ide.entities.User;
+import com.github.emraxxor.web.ide.repositories.ContainerRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * 
@@ -18,9 +18,13 @@ import com.github.emraxxor.web.ide.entities.User;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ContainerService extends BasicServiceAdapter<Container, Long, ContainerRepository>{
 
-	
+	// TEST CASE
+	@Autowired
+	private final ContainerRepository repository;
+
 	public Optional<Container> findByBind(int bind) {
 		return repository.findByBind(bind);
 	}

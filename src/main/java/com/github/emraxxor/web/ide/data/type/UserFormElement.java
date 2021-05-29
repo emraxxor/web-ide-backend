@@ -10,10 +10,12 @@ import javax.validation.constraints.NotNull;
 import com.github.emraxxor.web.ide.config.ApplicationUserRole;
 import com.github.emraxxor.web.ide.entities.User;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 public class UserFormElement extends FormElement<User> {
 
@@ -61,5 +63,9 @@ public class UserFormElement extends FormElement<User> {
 	@IgnoreField
 	@ApiModelProperty(value = "Old password", required = true)
 	private String oldUserPassword;
+
+	public UserFormElement(User u) {
+		super(u);
+	}
 
 }
